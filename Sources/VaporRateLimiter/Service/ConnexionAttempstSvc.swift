@@ -15,21 +15,10 @@ public struct ConnexionAttempstSvc {
         self.repo = repo
     }
 
-    // MARK: - Create
-
-    func create(_ dto: NewAttempt) async throws {
-        let model = dto.toModel()
-        try await repo.create(model)
-    }
-
     // MARK: - Read
 
     public func all() async throws -> [ConnexionAttempt] {
         try await repo.all()
-    }
-
-    func find(_ id: UUID) async throws -> ConnexionAttemptDto? {
-        try await repo.find(id)?.toDto()
     }
 
     func findBy(ip: String, or mail: String) async throws -> ConnexionAttempt? {
@@ -48,11 +37,6 @@ public struct ConnexionAttempstSvc {
         try await repo.delete(mail)
         logger.warning("- ✅ user: \(mail) loged successfully")
     }
-
-    func delete(_ id: UUID) async throws {
-        try await repo.delete(id)
-    }
-
 }
 
 extension Request {
