@@ -27,6 +27,7 @@
 - Limits the number of login attempts per IP and email
 - Gentle with legitimate users who make mistakes, relentless with attackers
 - Exponential penalty increases after each set of 5 consecutive failed attempts (60, 120, 240, 480... seconds)
+- Effectively protects against brute-force attacks, even when facing advanced techniques such as massive, concurrent (parallel) request attempts.
 - Logs all suspicious activities and lockouts
 - Easy integration into any existing Vapor project
 
@@ -35,9 +36,13 @@
 
 This package assumes you already have an existing Vapor project.
 
-- You have added **Fluent** as a dependency, and you are using a **Postgres** database.
+- You have added **Fluent** as a dependency and are using a **Postgres** database.
 
-If you do not have this setup, please follow the [official Vapor authentication documentation](https://docs.vapor.codes/getting-started/hello-world/).
+If you do not have this setup, please follow the [official Vapor getting started documentation](https://docs.vapor.codes/getting-started/hello-world/).
+
+You will also need a `User` model conforming to the `ModelAuthenticatable` protocol to enable authentication features.
+
+If you need to implement this, refer to the [official Vapor authentication documentation](https://docs.vapor.codes/security/authentication/#model-authenticatable).
 
 ---
 
