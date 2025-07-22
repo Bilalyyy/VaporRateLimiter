@@ -5,7 +5,6 @@
 //  Created by Bilal Larose on 21/07/2025.
 //
 
-
 import Fluent
 
 public struct FluentRepository<M: Model>: CRUDProtocol where M.IDValue == UUID {

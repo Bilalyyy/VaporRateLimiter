@@ -1,12 +1,11 @@
 //
 //  File.swift
-//  Mirage
+//  RateLimitMiddleware
 //
 //  Created by Bilal Larose on 16/07/2025.
 //
 
 import VaporRateLimiter
-
 
 typealias UserRepository = FluentRepository<User>
 

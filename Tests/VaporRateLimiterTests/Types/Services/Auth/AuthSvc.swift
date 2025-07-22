@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  Mirage
+//  RateLimitMiddleware
 //
 //  Created by Bilal Larose on 17/07/2025.
 //
@@ -9,15 +9,15 @@ import Fluent
 import Vapor
 
 struct AuthSvc: AuthProtocol {
-    
+
     private let db: any Database
     private let userSvc: UserSvc
-    
+
     init(db: any Database, userSvc: UserSvc) {
         self.db = db
         self.userSvc = userSvc
     }
-    
+
     func canLogin(from req: LoginReq) async throws -> User {
         //1. Find user
         guard let user = try? await userSvc.findBy(mail: req.mail) else {
@@ -30,11 +30,10 @@ struct AuthSvc: AuthProtocol {
         //3. Return user
         return user
     }
-    
+
     func login(auth: Request.Authentication, user: User) {
         auth.login(user)
     }
-
 }
 
 extension AuthSvc {

@@ -7,7 +7,6 @@
 
 import Vapor
 
-
 struct CreateUserReq: Content {
     let name: String
     let mail: String

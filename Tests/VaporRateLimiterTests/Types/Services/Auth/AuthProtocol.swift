@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  Mirage
+//  RateLimitMiddleware
 //
 //  Created by Bilal Larose on 17/07/2025.
 //
