@@ -33,7 +33,7 @@ public struct ConnexionAttempstSvc {
 
     // MARK: - delete
 
-    public func delete(_ mail: String, logger: Logger) async throws {
+    public func userIsLoged(_ mail: String, logger: Logger) async throws {
         try await repo.delete(mail)
         logger.warning("- ✅ user: \(mail) loged successfully")
     }

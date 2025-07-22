@@ -52,7 +52,7 @@ func withApp(_ test: @escaping (Application) async throws -> Void) async throws 
 
             do {
                 let userCanLogin = try await req.authSvc.canLogin(from: content)
-                try await req.connexionAttempsSvc.delete(userCanLogin.mail,logger: req.logger)
+                try await req.connexionAttempsSvc.userIsLoged(userCanLogin.mail,logger: req.logger)
                 req.authSvc.login(auth: req.auth, user: userCanLogin)
 
                 return .ok
