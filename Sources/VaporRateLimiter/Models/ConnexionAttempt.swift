@@ -28,7 +28,7 @@ public final class ConnexionAttempt: Model, @unchecked Sendable {
 
     public init() { }
 
-    init(id: UUID? = nil, ip: String, mail: String, count: Int, timestamp: Date? = nil) {
+    public init(id: UUID? = nil, ip: String, mail: String, count: Int, timestamp: Date? = nil) {
         self.id = id
         self.ip = ip
         self.mail = mail

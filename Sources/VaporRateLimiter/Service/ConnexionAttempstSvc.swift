@@ -25,7 +25,7 @@ public struct ConnexionAttempstSvc {
 
     // MARK: - Read
 
-    func all() async throws -> [ConnexionAttempt] {
+    public func all() async throws -> [ConnexionAttempt] {
         try await repo.all()
     }
 
