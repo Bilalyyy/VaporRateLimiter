@@ -57,6 +57,83 @@ And add `"VaporRateLimiter"` to your target dependencies.
 
 ---
 
+## ⚙️ Configuration
+
+**Before configuring the rate limiter, make sure you are using session-based authentication and have added the session model migration.**
+Your `configure.swift` file should contain something similar to:
+
+```swift
+
+//...
+app.sessions.use(.fluent)
+
+app.sessions.configuration.cookieName = "your-cookie-name-session"
+app.sessions.configuration.cookieFactory = { sessionID in
+    .init(
+        string: sessionID.string,
+        expires: Date().addingTimeInterval(60 * 60 * 24 * 30), // 30 days
+        isSecure: true
+    )
+}
+
+app.middleware.use(app.sessions.middleware)
+
+// Session-based authentication
+app.middleware.use(User.sessionAuthenticator())
+
+app.migrations.add(SessionRecord.migration)
+//...
+
+```
+
+### Step 1: Add the ConnexionAttempt model migration
+
+To work properly, VaporRateLimiter requires a new model in your database to track login attempts.
+This means you need to run a migration.
+Make sure to add `CreateConnexionAttempt()` to your migration list.
+For example, in your `configure.swift` file:
+
+```swift
+
+import VaporRateLimiter
+//...
+
+public func configure(_ app: Application) async throws {
+
+    //...
+
+    app.migrations.add(CreateConnexionAttempt())
+    //...
+}
+```
+
+### Step 2: Protect your login endpoint with the middleware
+
+Apply the `RateLimit` middleware to your login route to enable brute-force protection.
+For example:
+
+```swift
+import Vapor
+import VaporRateLimiter
+
+struct AuthController: RouteCollection {
+    func boot(routes: any RoutesBuilder) throws {
+        let routes = routes.grouped("api", "v1", "auth")
+        // ...
+
+        let limitedRoutes = routes.grouped(RateLimit())
+        limitedRoutes.post("login", use: loginHandler)
+        // ...
+    }
+}
+```
+
+
+
+
+
+---
+
 ## 🛠️ Usage
 
 Import the package in your file:
@@ -72,28 +149,6 @@ app.middleware.use(RateLimiterMiddleware())
 ```
 
 Configure the rate limiter as needed (see documentation for advanced configuration).
-
----
-
-## ⚙️ Configuration
-
-You can customize:
-
-- Maximum attempts per time window
-- Lockout duration and penalty escalation
-- Tracking by IP, email, or custom keys
-- Logging and notification hooks
-
-Example:
-
-```swift
-let limiter = RateLimiterMiddleware(
-    maxAttempts: 5,
-    window: .minutes(10),
-    penalty: .exponential(base: 60, factor: 2)
-)
-app.middleware.use(limiter)
-```
 
 ---
 
