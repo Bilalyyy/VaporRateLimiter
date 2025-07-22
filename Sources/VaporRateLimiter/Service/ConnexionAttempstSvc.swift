@@ -56,7 +56,7 @@ public struct ConnexionAttempstSvc {
 }
 
 extension Request {
-    var connexionAttempsSvc: ConnexionAttempstSvc {
+    public var connexionAttempsSvc: ConnexionAttempstSvc {
         .init(repo: .init(db: self.db))
     }
 }
