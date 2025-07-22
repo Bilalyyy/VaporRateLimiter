@@ -9,10 +9,10 @@
 import Vapor
 import Fluent
 
-final class RateLimit: AsyncMiddleware {
+public final class RateLimit: AsyncMiddleware {
     private let threshold = 5
 
-    func respond(to request: Vapor.Request, chainingTo next: any Vapor.AsyncResponder) async throws -> Vapor.Response {
+    public func respond(to request: Vapor.Request, chainingTo next: any Vapor.AsyncResponder) async throws -> Vapor.Response {
         let userIP = fetchIPAdresse(request)
         let userMail = try request.content.get(String.self, at: "mail")
         let currentTime = Date()

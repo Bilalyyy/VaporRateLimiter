@@ -7,8 +7,8 @@
 
 import Fluent
 
-struct CreateConnexionAttempt: Migration {
-    func prepare(on database: any FluentKit.Database) -> NIOCore.EventLoopFuture<Void> {
+public struct CreateConnexionAttempt: Migration {
+    public func prepare(on database: any FluentKit.Database) -> NIOCore.EventLoopFuture<Void> {
         database.schema(ConnexionAttempt.schema)
             .id()
             .field("ip", .string, .required)
@@ -20,8 +20,7 @@ struct CreateConnexionAttempt: Migration {
             .create()
     }
     
-    func revert(on database: any FluentKit.Database) -> NIOCore.EventLoopFuture<Void> {
+    public func revert(on database: any FluentKit.Database) -> NIOCore.EventLoopFuture<Void> {
         database.schema(ConnexionAttempt.schema).delete()
     }
-
 }
