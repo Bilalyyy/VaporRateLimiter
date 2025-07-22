@@ -12,6 +12,8 @@ import Fluent
 public final class RateLimit: AsyncMiddleware {
     private let threshold = 5
 
+    public init() { }
+
     public func respond(to request: Vapor.Request, chainingTo next: any Vapor.AsyncResponder) async throws -> Vapor.Response {
         let userIP = fetchIPAdresse(request)
         let userMail = try request.content.get(String.self, at: "mail")

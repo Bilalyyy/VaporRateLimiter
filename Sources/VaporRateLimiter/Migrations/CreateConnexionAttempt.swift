@@ -8,6 +8,9 @@
 import Fluent
 
 public struct CreateConnexionAttempt: Migration {
+
+    public init() { }
+
     public func prepare(on database: any FluentKit.Database) -> NIOCore.EventLoopFuture<Void> {
         database.schema(ConnexionAttempt.schema)
             .id()
