@@ -11,7 +11,11 @@ import Fluent
 public struct FluentRepository<M: Model>: CRUDProtocol where M.IDValue == UUID {
 
     typealias Entity = M
-    let db: any Database
+    public let db: any Database
+
+    public init(db: any Database) {
+        self.db = db
+    }
 
     // MARK: - Read
 
@@ -25,7 +29,7 @@ public struct FluentRepository<M: Model>: CRUDProtocol where M.IDValue == UUID {
 
     //MARK: - Create
 
-    func create(_ model: M) async throws {
+    public func create(_ model: M) async throws {
         try await model.create(on: db)
     }
 
