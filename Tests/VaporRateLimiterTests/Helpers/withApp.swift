@@ -33,6 +33,7 @@ func withApp(_ test: @escaping (Application) async throws -> Void) async throws 
 
         // MARK: - Out-of-package migration
         app.migrations.add(CreateUser())
+        app.migrations.add(SessionRecord.migration)
 
 
         // MARK: - Package Migrations

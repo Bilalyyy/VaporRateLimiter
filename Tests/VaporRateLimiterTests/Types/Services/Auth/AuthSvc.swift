@@ -5,7 +5,6 @@
 //  Created by Bilal Larose on 17/07/2025.
 //
 
-import VaporRateLimiter
 import Fluent
 import Vapor
 

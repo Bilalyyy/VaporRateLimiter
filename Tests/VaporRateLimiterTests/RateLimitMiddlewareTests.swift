@@ -1,9 +1,14 @@
 //
-//  File.swift
-//  Mirage
+//  RateLimitMiddlewareTests.swift
+//  VaporRateLimiter
 //
 //  Created by Bilal Larose on 17/07/2025.
 //
+// Unit tests for the VaporRateLimiter middleware.
+// - Verifies the behavior of the middleware alone: threshold management, penalty activation and lifting, timeout calculation, etc.
+// - These tests are isolated from the actual authentication logic.
+//
+// Uses a test database (Fluent/Postgres) to simulate attempts.
 
 @testable import VaporRateLimiter
 import VaporTesting
@@ -11,18 +16,15 @@ import Testing
 import Fluent
 
 
-@Suite("RateLimiter with DB", .serialized)
+@Suite("RateLimiter with DB (Units test)", .serialized)
 
 struct RateMiddlewareTests {
     
     @Test("allows requests under threshold")
     func testAllowsRequestsUnderThreshold() async throws {
         try await withApp { app in
-            // Simule un user avec 3 tentatives seulement (< seuil 5)
-            let attempts = ConnexionAttempt(
-                ip: "127.0.0.1",
-                mail: "foo@bar.com",
-                count: 3)
+            // Simulates a user with only 3 attempts (< threshold 5)
+            let attempts = ConnexionAttempt.createAnAttempt(count: 3)
 
             try await attempts.save(on: app.db)
 
@@ -42,12 +44,8 @@ struct RateMiddlewareTests {
     @Test("blocks requests above threshold")
     func testBlocksRequestsAboveThreshold() async throws {
         try await withApp { app in
-            // Simule un user avec 10 tentatives (seuil = 5, penalty exponentiel)
-
-            let attempts = ConnexionAttempt(
-                ip: "127.0.0.1",
-                mail: "foo@bar.com",
-                count: 7)
+            // Simulates a user with 7 attempts (threshold = 5)
+            let attempts = ConnexionAttempt.createAnAttempt(count: 7)
 
             try await attempts.save(on: app.db)
 

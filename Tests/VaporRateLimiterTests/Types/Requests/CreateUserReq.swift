@@ -19,4 +19,9 @@ struct CreateUserReq: Content {
         self.password = password
     }
 
+    func toModel() throws -> User {
+        let hash = try Bcrypt.hash(password)
+
+        return User(name: name, mail: mail, passwordHash: hash)
+    }
 }

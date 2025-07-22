@@ -37,10 +37,14 @@ public final class ConnexionAttempt: Model, @unchecked Sendable {
     }
 }
 
-//MARK: - function
-
 extension ConnexionAttempt {
     func toDto() -> ConnexionAttemptDto {
         return .init(id: id, count: count, timestamp: timestamp ?? .now)
+    }
+
+    static func createAnAttempt(count: Int) -> Self {
+        .init(ip: "127.0.0.1",
+        mail: "foo@bar.com",
+        count: count)
     }
 }

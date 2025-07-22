@@ -15,6 +15,14 @@ struct UserSvc {
         self.userRepo = userRepo
     }
 
+    // MARK: - Create
+
+    func create(from req: CreateUserReq) async throws {
+        let model = try req.toModel()
+        try await userRepo.create(model)
+    }
+
+
     // MARK: -Read
 
     func findBy(mail: String) async throws -> User {
