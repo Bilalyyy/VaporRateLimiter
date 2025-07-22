@@ -1,15 +1,14 @@
 //
 //  RateLimitMiddleware.swift
-//  Mirage
+//  RateLimitMiddleware
 //
 //  Created by Bilal Larose on 17/07/2025.
 //
 
-
 import Vapor
 import Fluent
 
-public final class RateLimit: AsyncMiddleware {
+public final class RateLimiter: AsyncMiddleware {
     private let threshold = 5
 
     public init() { }

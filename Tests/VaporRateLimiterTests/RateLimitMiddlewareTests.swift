@@ -79,7 +79,7 @@ struct RateMiddlewareTests {
 
     @Test("penalty is active during penalty window and lifted after delay")
     func testPenaltyActiveAndLiftedAfterDelay() async throws {
-        let sut = RateLimit()
+        let sut = RateLimiter()
         let attempt = ConnexionAttemptDto(id: UUID(), count: 5, timestamp: .now)
 
         let penaltyIsActive = sut.isPenaltyActive(for: attempt,
@@ -93,7 +93,7 @@ struct RateMiddlewareTests {
 
     @Test("penalty calculator")
     func testPenaltyCalculator() async throws {
-        let sut = RateLimit()
+        let sut = RateLimiter()
 
         let nbrAttempts: [Int]              = [0, 1, 2, 3, 4, 5, 6, 10, 16, 21, 26, 31, 36, 41]
         let expectedPenalty: [TimeInterval] = [0, 0, 0, 0, 0, 60, 60, 120, 240, 480, 960, 1_920, 3_840, 7_680]

@@ -46,7 +46,7 @@ func withApp(_ test: @escaping (Application) async throws -> Void) async throws 
 
         let routes = app.routes.grouped("test")
 
-        let limitedRoutes = routes.grouped(RateLimit())
+        let limitedRoutes = routes.grouped(RateLimiter())
         limitedRoutes.post("login") { req async throws -> HTTPStatus in
             let content = try req.content.decode(LoginReq.self)
 
