@@ -109,7 +109,7 @@ public func configure(_ app: Application) async throws {
 
 ### Step 2: Protect your login endpoint with the middleware
 
-Apply the `RateLimit` middleware to your login route to enable brute-force protection.
+Apply the `RateLimiter` middleware to your login route to enable brute-force protection.
 For example:
 
 ```swift
@@ -121,7 +121,7 @@ struct AuthController: RouteCollection {
         let routes = routes.grouped("api", "v1", "auth")
         // ...
 
-        let limitedRoutes = routes.grouped(RateLimit())
+        let limitedRoutes = routes.grouped(RateLimiter())
         limitedRoutes.post("login", use: loginHandler)
         // ...
     }
