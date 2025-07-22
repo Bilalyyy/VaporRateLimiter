@@ -22,28 +22,27 @@ public final class RateLimiter: AsyncMiddleware {
             return try await next.respond(to: request)
         }
 
-        let count = try await request.connexionAttempsSvc.incrementAndReturnCount(ip: userIP, mail: userMail)
-        request.logger.warning("➡️ >>> SECURITY ALERT - \(userMail) ip : \(userIP) failed login for first time")
+        request.logger.warning("- \(currentTime) user: \(userMail); ip : \(userIP) try to login")
 
         // Find if attempt exist in DB
         guard let lastAttempt = try await request.connexionAttempsSvc.findBy(ip: userIP,
                                                                              or: userMail) else {
-            request.logger.warning("\(currentTime) >>> SECURITY ALERT - \(userMail) ip : \(userIP) failed login for first time")
-
-            request.logger.warning("\(currentTime) >>> SECURITY ALERT - ✅ attempt for \(userMail) ip : \(userIP) is created")
+            _ = try await request.connexionAttempsSvc.incrementAndReturnCount(ip: userIP, mail: userMail)
 
             return try await next.respond(to: request)
         }
 
+        let count = try await request.connexionAttempsSvc.incrementAndReturnCount(ip: userIP, mail: userMail)
+
         // User fails a few times
-        request.logger.warning("\(currentTime) >>> SECURITY ALERT - \(userMail) ip : \(userIP) failed login for \(lastAttempt.count) time")
+        request.logger.warning("- ⚠️⚠️ - user: \(userMail) failed login for \(lastAttempt.count) time(s)")
 
 
         guard lastAttempt.count >= threshold && isPenaltyActive(for: lastAttempt.toDto()) else {
             return try await next.respond(to: request)
         }
 
-        request.logger.warning("\(currentTime) >>> SECURITY ALERT - \(userMail) ip : \(userIP) locked for \(penaltyCalculator(lastAttempt.count)) seconds after \(count) failed attempts")
+        request.logger.warning("- ⚠️⚠️⚠️ - user: \(userMail) locked for \(penaltyCalculator(lastAttempt.count)) seconds after \(count) failed attempts")
 
         throw Abort(.tooManyRequests, reason: "Too many attempts. Try again after \(penaltyCalculator(count)) seconds.")
     }
