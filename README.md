@@ -3,11 +3,12 @@
   https://github.com/<your-github>/VaporRateLimiter
 -->
 
+# VaporRateLimiter
+
 <p align="center">
   <img src="https://app-soon.com/wp-content/uploads/2025/07/RateLimiter-2.png" alt="VaporRateLimiter logo" width="180">
 </p>
 
-# VaporRateLimiter
 
 ![Swift](https://img.shields.io/badge/swift-5.9+-orange?style=flat-square)
 ![Vapor](https://img.shields.io/badge/vapor-4.x-green?style=flat-square)
