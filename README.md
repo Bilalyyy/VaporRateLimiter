@@ -24,7 +24,8 @@
 ## 🚀 Features
 
 - Limits the number of login attempts per IP and email
-- Exponential penalty after repeated failures
+- Gentle with legitimate users who make mistakes, relentless with attackers
+- Exponential penalty after repeated failures (60, 120, 240, 480... seconds)
 - Logs all suspicious activities and lockouts
 - Easy integration into any existing Vapor project
 
@@ -34,10 +35,8 @@
 This package assumes you already have an existing Vapor project.
 
 - You have added **Fluent** as a dependency, and you are using a **Postgres** database.
-- Your application uses an authentication system based on **sessions** (with Vapor's authentication API).
-- You have a `User` model conforming to the `ModelAuthenticatable` protocol.
 
-If you do not have this setup, please follow the [official Vapor authentication documentation](https://docs.vapor.codes/security/authentication/#session).
+If you do not have this setup, please follow the [official Vapor authentication documentation](https://docs.vapor.codes/getting-started/hello-world/).
 
 ---
 
@@ -58,33 +57,6 @@ And add `"VaporRateLimiter"` to your target dependencies.
 ---
 
 ## ⚙️ Configuration
-
-**Before configuring the rate limiter, make sure you are using session-based authentication and have added the session model migration.**
-Your `configure.swift` file should contain something similar to:
-
-```swift
-
-//...
-app.sessions.use(.fluent)
-
-app.sessions.configuration.cookieName = "your-cookie-name-session"
-app.sessions.configuration.cookieFactory = { sessionID in
-    .init(
-        string: sessionID.string,
-        expires: Date().addingTimeInterval(60 * 60 * 24 * 30), // 30 days
-        isSecure: true
-    )
-}
-
-app.middleware.use(app.sessions.middleware)
-
-// Session-based authentication
-app.middleware.use(User.sessionAuthenticator())
-
-app.migrations.add(SessionRecord.migration)
-//...
-
-```
 
 ### Step 1: Add the ConnexionAttempt model migration
 
@@ -128,9 +100,21 @@ struct AuthController: RouteCollection {
 }
 ```
 
+### Final Step: Clearing login attempts after successful authentication
 
+To prevent your users from being locked out for hours due to old, accumulated failed attempts,
+it’s important to clear their login attempts after a successful authentication.
 
+This is usually done in your `loginHandler` function.
+Make sure to add the following line **after a successful login**:
 
+```swift
+private func loginHandler(_ req: Request) async throws -> HTTPStatus {
+    // ... authentication logic ...
+    try await req.connexionAttempsSvc.userIsLoged(user.mail, req.logger)
+    // ...
+}
+```
 
 ---
 
