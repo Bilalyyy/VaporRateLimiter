@@ -45,7 +45,7 @@ public struct ConnexionAttempstSvc {
 
     // MARK: - delete
 
-    func delete(_ mail: String) async throws {
+    public func delete(_ mail: String) async throws {
         try await repo.delete(mail)
     }
 
