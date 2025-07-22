@@ -9,10 +9,10 @@ import Vapor
 import Fluent
 
 
-struct ConnexionAttempstSvc {
+public struct ConnexionAttempstSvc {
     private let repo: ConnexionAttemptRepository
 
-    init(repo: ConnexionAttemptRepository) {
+    public init(repo: ConnexionAttemptRepository) {
         self.repo = repo
     }
 

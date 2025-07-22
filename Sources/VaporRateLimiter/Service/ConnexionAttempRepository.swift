@@ -8,7 +8,7 @@
 import Fluent
 import SQLKit
 
-typealias ConnexionAttemptRepository = FluentRepository<ConnexionAttempt>
+public typealias ConnexionAttemptRepository = FluentRepository<ConnexionAttempt>
 
 // MARK: - CRUD
 extension ConnexionAttemptRepository {

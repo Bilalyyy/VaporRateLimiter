@@ -8,25 +8,25 @@
 import Vapor
 import Fluent
 
-final class ConnexionAttempt: Model, @unchecked Sendable {
-    static let schema = "connexion_attempts"
+public final class ConnexionAttempt: Model, @unchecked Sendable {
+    public static let schema = "connexion_attempts"
 
     @ID(key: .id)
-    var id: UUID?
+    public var id: UUID?
 
     @Field(key: "ip")
-    var ip: String
+    public var ip: String
 
     @Field(key: "mail")
-    var mail: String
+    public var mail: String
 
     @Field(key: "count")
-    var count: Int
+    public var count: Int
 
     @Timestamp(key: "timestamp",on: .update)
-    var timestamp: Date?
+    public var timestamp: Date?
 
-    init() { }
+    public init() { }
 
     init(id: UUID? = nil, ip: String, mail: String, count: Int, timestamp: Date? = nil) {
         self.id = id

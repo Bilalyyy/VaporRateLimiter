@@ -8,7 +8,7 @@
 
 import Fluent
 
-struct FluentRepository<M: Model>: CRUDProtocol where M.IDValue == UUID {
+public struct FluentRepository<M: Model>: CRUDProtocol where M.IDValue == UUID {
 
     typealias Entity = M
     let db: any Database
