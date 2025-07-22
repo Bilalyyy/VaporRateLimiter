@@ -26,7 +26,7 @@
 
 - Limits the number of login attempts per IP and email
 - Gentle with legitimate users who make mistakes, relentless with attackers
-- Exponential penalty after repeated failures (60, 120, 240, 480... seconds)
+- Exponential penalty increases after each set of 5 consecutive failed attempts (60, 120, 240, 480... seconds)
 - Logs all suspicious activities and lockouts
 - Easy integration into any existing Vapor project
 
