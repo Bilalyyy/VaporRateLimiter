@@ -22,27 +22,21 @@ public final class RateLimiter: AsyncMiddleware {
             return try await next.respond(to: request)
         }
 
-        request.logger.warning("- \(currentTime) user: \(userMail); ip : \(userIP) try to login")
-
-        // Find if attempt exist in DB
-        guard let lastAttempt = try await request.connexionAttempsSvc.findBy(ip: userIP,
-                                                                             or: userMail) else {
-            _ = try await request.connexionAttempsSvc.incrementAndReturnCount(ip: userIP, mail: userMail)
-
-            return try await next.respond(to: request)
-        }
-
+        // TODO: update incrementAndReturnCount() to incrementAndReturnConnexionAttemptDto()
         let count = try await request.connexionAttempsSvc.incrementAndReturnCount(ip: userIP, mail: userMail)
 
-        // User fails a few times
-        request.logger.warning("- ⚠️⚠️ - user: \(userMail) failed login for \(lastAttempt.count) time(s)")
+        request.logger.warning("- \(currentTime) user: \(userMail); ip : \(userIP) try to login for \(count) time(s)")
 
+        guard let lastAttempt = try await request.connexionAttempsSvc.findBy(ip: userIP,
+                                                                             or: userMail) else {
+            throw Abort(.notFound, reason: "no attempt found")
+        }
 
         guard lastAttempt.count >= threshold && isPenaltyActive(for: lastAttempt.toDto()) else {
             return try await next.respond(to: request)
         }
 
-        request.logger.warning("- ⚠️⚠️⚠️ - user: \(userMail) locked for \(penaltyCalculator(lastAttempt.count)) seconds after \(count) failed attempts")
+        request.logger.warning("⚠️ user: \(userMail) locked for \(penaltyCalculator(lastAttempt.count)) seconds after \(count) failed attempts")
 
         throw Abort(.tooManyRequests, reason: "Too many attempts. Try again after \(penaltyCalculator(count)) seconds.")
     }
