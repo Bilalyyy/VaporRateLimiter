@@ -106,6 +106,17 @@ struct AuthController: RouteCollection {
 }
 ```
 
+By default, the threshold for failed attempts before applying the exponential penalty is set to five.
+This means a user can make up to five incorrect login attempts before being subject to a penalty (a waiting period during which further login attempts are blocked).
+You can customize this value to fit your security needs:
+
+```swift
+    let limitedRoutes = routes.grouped(RateLimiter(threshold: Int))
+```
+
+> ⚠️ **Note:** For safety and convenience, the rate limiter middleware is disabled by default in the development environment.
+
+
 ### Final Step: Clearing login attempts after successful authentication
 
 To prevent your users from being locked out for hours due to old, accumulated failed attempts,

@@ -9,9 +9,11 @@ import Vapor
 import Fluent
 
 public final class RateLimiter: AsyncMiddleware {
-    private let threshold = 5
+    private let threshold: Int
 
-    public init() { }
+    public init(threshold: Int = 5) {
+        self.threshold = threshold
+    }
 
     public func respond(to request: Vapor.Request, chainingTo next: any Vapor.AsyncResponder) async throws -> Vapor.Response {
         let userIP = fetchIPAdresse(request)
@@ -43,11 +45,10 @@ public final class RateLimiter: AsyncMiddleware {
 
 
     func penaltyCalculator(_ nbrAttempts: Int, baseTimeFrame: TimeInterval = 60) -> TimeInterval {
-        guard nbrAttempts >= 5 else {
+        guard nbrAttempts >= threshold else {
             return 0
         }
 
-        let threshold = 5
         let palier = (nbrAttempts - threshold) / threshold
         let exponent = max(0, palier + 1)
 
