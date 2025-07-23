@@ -34,14 +34,13 @@
 ---
 ## Prerequisites
 
-This package assumes you already have an existing Vapor project.
+This documentation assumes you already have an existing Vapor project.
 
 - You have added **Fluent** as a dependency and are using a **Postgres** database.
 
 If you do not have this setup, please follow the [official Vapor getting started documentation](https://docs.vapor.codes/getting-started/hello-world/).
 
-You will also need a `User` model conforming to the `ModelAuthenticatable` protocol to enable authentication features.
-
+You may also need a `User` model that conforms to the `ModelAuthenticable` protocol to enable authentication features.
 If you need to implement this, refer to the [official Vapor authentication documentation](https://docs.vapor.codes/security/authentication/#model-authenticatable).
 
 ---
@@ -51,13 +50,13 @@ If you need to implement this, refer to the [official Vapor authentication docum
 Add this package to your `Package.swift` dependencies:
 
 ```swift
-    .package(url: "https://github.com/Bilalyyy/VaporRateLimiter", from: "1.0.0")
+.package(url: "https://github.com/Bilalyyy/VaporRateLimiter", from: "1.0.0")
 ```
 
 And add `"VaporRateLimiter"` to your target dependencies.
 
 ```swift
-    .product(name: "VaporRateLimiter", package: "VaporRateLimiter")
+.product(name: "VaporRateLimiter", package: "VaporRateLimiter")
 ```
 
 ---
@@ -74,14 +73,16 @@ For example, in your `configure.swift` file:
 ```swift
 
 import VaporRateLimiter
-//...
+
 
 public func configure(_ app: Application) async throws {
 
     //...
 
     app.migrations.add(CreateConnexionAttempt())
+
     //...
+
 }
 ```
 
@@ -111,7 +112,7 @@ This means a user can make up to five incorrect login attempts before being subj
 You can customize this value to fit your security needs:
 
 ```swift
-    let limitedRoutes = routes.grouped(RateLimiter(threshold: Int))
+let limitedRoutes = routes.grouped(RateLimiter(threshold: Int))
 ```
 
 #### 💡 How does VaporRateLimiter work?
@@ -128,7 +129,7 @@ If you want to track attempts using a different identifier (for example, an API 
 
 ```swift
     // Make sure you use the key used in your request
-let limitedWithAPIKey = routes2.grouped(RateLimiter(keyToRegister: "apiKey"))
+let limitedRoutes = routes.grouped(RateLimiter(keyToRegister: "apiKey"))
 ```
 This flexibility allows you to adapt VaporRateLimiter to a variety of use cases—whether you’re protecting login endpoints, API access, or any other sensitive route.
 
@@ -156,7 +157,7 @@ Make sure to add the following line **after a successful login**:
 private func loginHandler(_ req: Request) async throws -> HTTPStatus {
     // ... authentication logic ...
     // ... After the user is authenticated
-    try await req.connexionAttempsSvc.userIsLoged(user.mail, req.logger)
+    try await req.connexionAttempsSvc.userIsLoged(user.mail)
     // ...
 }
 ```
