@@ -117,6 +117,7 @@ Make sure to add the following line **after a successful login**:
 ```swift
 private func loginHandler(_ req: Request) async throws -> HTTPStatus {
     // ... authentication logic ...
+    // ... After the user is authenticated
     try await req.connexionAttempsSvc.userIsLoged(user.mail, req.logger)
     // ...
 }
@@ -124,31 +125,20 @@ private func loginHandler(_ req: Request) async throws -> HTTPStatus {
 
 ---
 
-## 🛠️ Usage
+## ✍️ Contributing
 
-Import the package in your file:
-
-```swift
-import VaporRateLimiter
-```
-
-Register the middleware in your `configure.swift`:
-
-```swift
-app.middleware.use(RateLimiterMiddleware())
-```
-
-Configure the rate limiter as needed (see documentation for advanced configuration).
+For contribution guidelines, see [CONTRIBUTING](CONTRIBUTING.md).
 
 ---
 
-## ✍️ Contributing
+## ✉️ Contact
 
-For contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
+Feel free to open an [issue](../../issues) or [contact me by email](mailto:contact@app-soon.com).
+You can also find me on [Linkedin](www.linkedin.com/in/gregory-larose-developpeur).
 
 ---
 
 ## 📋 License
 
-MIT © [<your-github>](https://github.com/<your-github>)
+MIT © [Bilalyyy](https://github.com/Bilalyyy)
             
