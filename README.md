@@ -133,8 +133,8 @@ For contribution guidelines, see [CONTRIBUTING](CONTRIBUTING.md).
 
 ## ✉️ Contact
 
-Feel free to open an [issue](../../issues) or [contact me by email](mailto:contact@app-soon.com).
-You can also find me on [Linkedin](www.linkedin.com/in/gregory-larose-developpeur).
+Feel free to open an [issue](../../issues) or contact me by [email](mailto:contact@app-soon.com).
+You can also find me on [Linkedin](https://www.linkedin.com/in/gregory-larose-developpeur).
 
 ---
 
