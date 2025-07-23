@@ -114,8 +114,35 @@ You can customize this value to fit your security needs:
     let limitedRoutes = routes.grouped(RateLimiter(threshold: Int))
 ```
 
+#### 💡 How does VaporRateLimiter work?
+
+VaporRateLimiter is a middleware that intercepts incoming requests on the routes where it is applied **before** they reach your route handlers.  
+When a request is intercepted, the middleware attempts to record an entry in the database to track attempts from the sender.  
+To do this, it uses a unique key to identify the sender—by default, this key is the user's email address (the value associated with the `"mail"` field in your request data).
+
+**Important:**  
+If the middleware does not find a value for the expected key, it cannot register a new entry and the process will fail.  
+Make sure you are using the correct key for your use case.
+
+If you want to track attempts using a different identifier (for example, an API key or username), you can customize the key as follows:
+
+```swift
+    // Make sure you use the key used in your request
+let limitedWithAPIKey = routes2.grouped(RateLimiter(keyToRegister: "apiKey"))
+```
+This flexibility allows you to adapt VaporRateLimiter to a variety of use cases—whether you’re protecting login endpoints, API access, or any other sensitive route.
+
+---
+
 > ⚠️ **Note:** For safety and convenience, the rate limiter middleware is disabled in the development environment.
 
+---
+
+> ⚠️ **Note:** Do not confuse the key intercepted from the request by VaporRateLimiter (for example, `"mail"` or `"apiKey"`) with the database field where the value is stored.  
+> The key you specify in the middleware (`keyToRegister`) can be changed to suit your needs,  
+> but the field used in the database is always the same: `key_id` (in the `ConnexionAttempt` model).
+
+---
 
 ### Final Step: Clearing login attempts after successful authentication
 
