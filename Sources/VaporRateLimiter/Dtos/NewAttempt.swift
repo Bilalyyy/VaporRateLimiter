@@ -14,6 +14,6 @@ struct NewAttempt: Content {
 
 extension NewAttempt {
     func toModel() -> ConnexionAttempt {
-        .init(ip: ip, mail: mail, count: 1)
+        .init(ip: ip, keyId: mail, count: 1)
     }
 }

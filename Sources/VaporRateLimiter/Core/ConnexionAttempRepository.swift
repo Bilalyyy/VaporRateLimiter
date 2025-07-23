@@ -15,23 +15,23 @@ extension ConnexionAttemptRepository {
 
     // MARK: - Read
 
-    func find(by ip: String, or mail: String) async throws -> ConnexionAttempt? {
+    func find(by ip: String, or keyId: String) async throws -> ConnexionAttempt? {
         try await M.query(on: db)
             .group(.or) { group in
                 group.filter((\.$ip == ip))
-                group.filter((\.$mail == mail))
+                group.filter((\.$keyId == keyId))
             }
             .first()
     }
 
     // MARK: - Update
 
-    func incrementAndReturnCount(ip: String, mail: String) async throws -> Int {
+    func incrementAndReturnCount(ip: String, keyId: String) async throws -> Int {
         let sql = db as! any SQLDatabase
         let query: SQLQueryString = """
-        INSERT INTO connexion_attempts (id, ip, mail, count, timestamp)
-        VALUES (\(bind: UUID()), \(bind: ip), \(bind: mail), 1, NOW())
-        ON CONFLICT (mail)
+        INSERT INTO connexion_attempts (id, ip, key_id, count, timestamp)
+        VALUES (\(bind: UUID()), \(bind: ip), \(bind: keyId), 1, NOW())
+        ON CONFLICT (key_id)
         DO UPDATE SET count = connexion_attempts.count + 1, timestamp = NOW()
         RETURNING count;
         """
@@ -45,9 +45,9 @@ extension ConnexionAttemptRepository {
 
     // MARK: - delete
 
-    func delete(_ mail: String) async throws {
+    func delete(_ keyId: String) async throws {
         try await M.query(on: db)
-            .filter( \.$mail == mail)
+            .filter(\.$keyId == keyId)
             .delete()
     }
 }

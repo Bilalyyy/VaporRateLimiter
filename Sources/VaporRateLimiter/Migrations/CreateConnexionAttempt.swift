@@ -15,11 +15,11 @@ public struct CreateConnexionAttempt: Migration {
         database.schema(ConnexionAttempt.schema)
             .id()
             .field("ip", .string, .required)
-            .field("mail", .string, .required)
+            .field("key_id", .string, .required)
             .field("count", .int, .required)
             .field("timestamp", .datetime, .required)
             .unique(on: "ip")
-            .unique(on: "mail")
+            .unique(on: "key_id")
             .create()
     }
     

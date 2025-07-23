@@ -44,15 +44,16 @@ func withApp(_ test: @escaping (Application) async throws -> Void) async throws 
 
         // MARK: - Routes
 
-        let routes = app.routes.grouped("test")
+        let routes1 = app.routes.grouped("testWithMail")
+        let routes2 = app.routes.grouped("testWithAPI")
 
-        let limitedRoutes = routes.grouped(RateLimiter())
+        let limitedRoutes = routes1.grouped(RateLimiter())
         limitedRoutes.post("login") { req async throws -> HTTPStatus in
             let content = try req.content.decode(LoginReq.self)
 
             do {
                 let userCanLogin = try await req.authSvc.canLogin(from: content)
-                try await req.connexionAttempsSvc.userIsLoged(userCanLogin.mail,logger: req.logger)
+                try await req.connexionAttempsSvc.userIsLoged(userCanLogin.mail)
                 req.authSvc.login(auth: req.auth, user: userCanLogin)
 
                 return .ok
@@ -67,6 +68,28 @@ func withApp(_ test: @escaping (Application) async throws -> Void) async throws 
             }
         }
 
+
+        let limitedWithAPIKey = routes2.grouped(RateLimiter(keyToRegister: "apiKey"))
+        limitedWithAPIKey.post("login") { req async throws -> HTTPStatus in
+
+            let content = try req.content.decode(LoginReqByAPI.self)
+
+            do {
+                // ... authentication logic ...
+                // ... simulate user is authenticated
+                try await req.connexionAttempsSvc.userIsLoged(content.apiKey)
+
+                return .ok
+            } catch let error as AuthSvc.AuthError {
+                switch error {
+                case .authFailled:
+                    throw Abort(.unauthorized, reason: "Incorrect username or password")
+                }
+            } catch {
+                // Pour tout autre type d'erreur, retourne une erreur générique
+                throw Abort(.internalServerError, reason: "An unexpected error has occurred")
+            }
+        }
 
         // MARK: - Tests
 

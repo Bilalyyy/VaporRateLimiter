@@ -10,14 +10,16 @@ import Fluent
 
 public final class RateLimiter: AsyncMiddleware {
     private let threshold: Int
+    private let keyToRegister: String
 
-    public init(threshold: Int = 5) {
+    public init(threshold: Int = 5, keyToRegister: String = "mail") {
         self.threshold = threshold
+        self.keyToRegister = keyToRegister
     }
 
     public func respond(to request: Vapor.Request, chainingTo next: any Vapor.AsyncResponder) async throws -> Vapor.Response {
         let userIP = fetchIPAdresse(request)
-        let userMail = try request.content.get(String.self, at: "mail")
+        let keyId = try request.content.get(String.self, at: keyToRegister)
         let currentTime = Date()
 
         guard request.application.environment != .development else {
@@ -25,12 +27,12 @@ public final class RateLimiter: AsyncMiddleware {
         }
 
         // TODO: update incrementAndReturnCount() to incrementAndReturnConnexionAttemptDto()
-        let count = try await request.connexionAttempsSvc.incrementAndReturnCount(ip: userIP, mail: userMail)
+        let count = try await request.connexionAttempsSvc.incrementAndReturnCount(ip: userIP, keyId: keyId)
 
-        request.logger.warning("- \(currentTime) user: \(userMail); ip : \(userIP) try to login for \(count) time(s)")
+        request.logger.warning("- \(currentTime) user: \(keyId); ip : \(userIP) try to login for \(count) time(s)")
 
         guard let lastAttempt = try await request.connexionAttempsSvc.findBy(ip: userIP,
-                                                                             or: userMail) else {
+                                                                             or: keyId) else {
             throw Abort(.notFound, reason: "no attempt found")
         }
 
@@ -38,7 +40,7 @@ public final class RateLimiter: AsyncMiddleware {
             return try await next.respond(to: request)
         }
 
-        request.logger.warning("⚠️ user: \(userMail) locked for \(penaltyCalculator(lastAttempt.count)) seconds after \(count) failed attempts")
+        request.logger.warning("⚠️ user: \(keyId) locked for \(penaltyCalculator(lastAttempt.count)) seconds after \(count) failed attempts")
 
         throw Abort(.tooManyRequests, reason: "Too many attempts. Try again after \(penaltyCalculator(count)) seconds.")
     }

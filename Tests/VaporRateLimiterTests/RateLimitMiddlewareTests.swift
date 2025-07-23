@@ -28,9 +28,9 @@ struct RateMiddlewareTests {
 
             try await attempts.save(on: app.db)
 
-            let loginReq: LoginReq = .init(mail: attempts.mail, password: "pass")
+            let loginReq: LoginReq = .init(mail: attempts.keyId, password: "pass")
 
-            try await app.testing().test(.POST, "test/login", beforeRequest: { req in
+            try await app.testing().test(.POST, "testWithMail/login", beforeRequest: { req in
                 try req.content.encode(loginReq)
                 req.headers.replaceOrAdd(name: .init("X-Forwarded-For"), value: "127.0.0.1")
 
@@ -49,9 +49,9 @@ struct RateMiddlewareTests {
 
             try await attempts.save(on: app.db)
 
-            let loginReq: LoginReq = .init(mail: attempts.mail, password: "pass")
+            let loginReq: LoginReq = .init(mail: attempts.keyId, password: "pass")
 
-            try await app.testing().test(.POST, "test/login", beforeRequest: { req in
+            try await app.testing().test(.POST, "testWithMail/login", beforeRequest: { req in
                 try req.content.encode(loginReq)
                 req.headers.replaceOrAdd(name: .init("X-Forwarded-For"), value: "127.0.0.1")
             }, afterResponse: { res async throws in
@@ -67,7 +67,7 @@ struct RateMiddlewareTests {
         try await withApp { app in
             let loginReq: LoginReq = .init(mail: "test@test.com", password: "pass")
 
-            try await app.testing().test(.POST, "test/login", beforeRequest: { req in
+            try await app.testing().test(.POST, "testWithMail/login", beforeRequest: { req in
                 try req.content.encode(loginReq)
                 req.headers.replaceOrAdd(name: .init("X-Forwarded-For"), value: "127.0.0.1")
             }, afterResponse: { res async throws in

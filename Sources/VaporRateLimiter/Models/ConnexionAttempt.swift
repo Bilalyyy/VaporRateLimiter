@@ -17,8 +17,8 @@ public final class ConnexionAttempt: Model, @unchecked Sendable {
     @Field(key: "ip")
     public var ip: String
 
-    @Field(key: "mail")
-    public var mail: String
+    @Field(key: "key_id")
+    public var keyId: String
 
     @Field(key: "count")
     public var count: Int
@@ -28,10 +28,10 @@ public final class ConnexionAttempt: Model, @unchecked Sendable {
 
     public init() { }
 
-    public init(id: UUID? = nil, ip: String, mail: String, count: Int, timestamp: Date? = nil) {
+    public init(id: UUID? = nil, ip: String, keyId: String, count: Int, timestamp: Date? = nil) {
         self.id = id
         self.ip = ip
-        self.mail = mail
+        self.keyId = keyId
         self.count = count
         self.timestamp = timestamp
     }
@@ -44,7 +44,7 @@ extension ConnexionAttempt {
 
     static func createAnAttempt(count: Int) -> Self {
         .init(ip: "127.0.0.1",
-        mail: "foo@bar.com",
+        keyId: "foo@bar.com",
         count: count)
     }
 }

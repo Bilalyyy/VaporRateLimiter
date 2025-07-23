@@ -34,7 +34,7 @@ struct AuthControllerTests {
             // 2. Create content request
             let loginReq: LoginReq = .init(mail: newUser.mail, password: newUser.password)
 
-            try await app.testing().test(.POST, "test/login", beforeRequest: { req in
+            try await app.testing().test(.POST, "testWithMail/login", beforeRequest: { req in
                 try req.content.encode(loginReq)
             }, afterResponse: { res async throws in
                 #expect(res.status == .ok)
@@ -51,18 +51,18 @@ struct AuthControllerTests {
             let newUser = CreateUserReq(name: "Bilal", mail: "test@test.com", password: "pass")
             try await req.userSvc.create(from: newUser)
 
-            let attempt = ConnexionAttempt(ip: "127.0.0.1", mail: "test@test.com", count: 2)
+            let attempt = ConnexionAttempt(ip: "127.0.0.1", keyId: "test@test.com", count: 2)
             try await attempt.save(on: req.db)
 
             let loginReq = LoginReq(mail: "test@test.com", password: "pass")
-            try await app.testing().test(.POST, "test/login", beforeRequest: { req in
+            try await app.testing().test(.POST, "testWithMail/login", beforeRequest: { req in
                 try req.content.encode(loginReq)
             }, afterResponse: { res async throws in
                 #expect(res.status == .ok)
             })
 
             let savedAttempts = try await req.connexionAttempsSvc.all()
-            #expect(!savedAttempts.contains(where: { $0.mail == attempt.mail }))
+            #expect(!savedAttempts.contains(where: { $0.keyId == attempt.keyId }))
 
         }
     }
@@ -82,7 +82,7 @@ struct AuthControllerTests {
             // 2. Create content request
             let loginReq: LoginReq = .init(mail: newUser.mail, password: "bad password")
 
-            try await app.testing().test(.POST, "test/login", beforeRequest: { req in
+            try await app.testing().test(.POST, "testWithMail/login", beforeRequest: { req in
                 try req.content.encode(loginReq)
             }, afterResponse: { res async throws in
                 #expect(res.status == .unauthorized)
@@ -90,7 +90,7 @@ struct AuthControllerTests {
                 #expect(setCookieHeader.count == 0) // It should not have a session cookie
 
                 let attemps = try await req.connexionAttempsSvc.all()
-                #expect(attemps.contains(where: { $0.mail == newUser.mail }))
+                #expect(attemps.contains(where: { $0.keyId == newUser.mail }))
             })
         }
     }
@@ -106,7 +106,7 @@ struct AuthControllerTests {
             // 2. Create content request
             let loginReq: LoginReq = .init(mail: "bad@mail.com", password: newUser.password)
 
-            try await app.testing().test(.POST, "test/login", beforeRequest: { req in
+            try await app.testing().test(.POST, "testWithMail/login", beforeRequest: { req in
                 try req.content.encode(loginReq)
             }, afterResponse: { res async throws in
                 #expect(res.status == .unauthorized)
@@ -114,7 +114,7 @@ struct AuthControllerTests {
                 #expect(setCookieHeader.count == 0) // It should not have a session cookie
 
                 let attemps = try await req.connexionAttempsSvc.all()
-                #expect(attemps.contains(where: { $0.mail == loginReq.mail }))
+                #expect(attemps.contains(where: { $0.keyId == loginReq.mail }))
 
             })
         }
@@ -131,7 +131,7 @@ struct AuthControllerTests {
             let updateCount = 250
             var statuses: [HTTPStatus] = []
             for _ in 0..<updateCount {
-                try await app.testing().test(.POST, "test/login", beforeRequest: { req in
+                try await app.testing().test(.POST, "testWithMail/login", beforeRequest: { req in
                     try req.content.encode(loginReq)
                 }, afterResponse: { res async throws in
                     statuses.append(res.status)
@@ -147,7 +147,7 @@ struct AuthControllerTests {
 
             // Check that the base counter is correct
             let attempts = try await req.connexionAttempsSvc.all()
-            guard let attempt = attempts.first(where: { $0.mail == loginReq.mail }) else {
+            guard let attempt = attempts.first(where: { $0.keyId == loginReq.mail }) else {
                 throw Abort(.notFound, reason: "No attempts found for this email")
             }
 
@@ -168,7 +168,7 @@ struct AuthControllerTests {
             try await withThrowingTaskGroup(of: Void.self) { group in
                 for _ in 0..<updateCount {
                     group.addTask {
-                        try await app.testing().test(.POST, "test/login", beforeRequest: { req in
+                        try await app.testing().test(.POST, "testWithMail/login", beforeRequest: { req in
                             try req.content.encode(loginReq)
                         }, afterResponse: { res async throws in
                             await statusesActor.append(res.status)
@@ -191,7 +191,7 @@ struct AuthControllerTests {
 
             // Vérifie que le compteur en base est correct
             let attempts = try await req.connexionAttempsSvc.all()
-            guard let attempt = attempts.first(where: { $0.mail == loginReq.mail }) else {
+            guard let attempt = attempts.first(where: { $0.keyId == loginReq.mail }) else {
                 throw Abort(.notFound, reason: "No attempts found for this email")
             }
 
@@ -199,6 +199,32 @@ struct AuthControllerTests {
         }
     }
 
+    @Test("with a key other than 'mail'")
+    func withKeyOtherThanMail() async throws {
+        try await withApp { app in
+            let req = Request(application: app, on: app.db.eventLoop)
+            // create attempt to simulate 2 fails
+            let attempt = ConnexionAttempt(ip: "127.0.0.1", keyId: "My_API_Key", count: 2)
+            try await attempt.save(on: req.db)
+
+            let loginReq = LoginReqByAPI(apiKey: "My_API_Key", password: "pass")
+
+            try await app.testing().test(.POST, "testWithAPI/login", beforeRequest: { req in
+                try req.content.encode(loginReq)
+            }, afterResponse: { res async throws in
+                #expect(res.status == .ok)
+            })
+
+            let savedAttempts = try await req.connexionAttempsSvc.all()
+            #expect(!savedAttempts.contains(where: { $0.keyId == attempt.keyId }))
+
+        }
+    }
+}
+
+struct LoginReqByAPI: Content {
+    let apiKey: String
+    let password: String
 }
 
 actor StatusesActor {

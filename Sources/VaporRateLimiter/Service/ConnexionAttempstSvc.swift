@@ -10,9 +10,11 @@ import Fluent
 
 public struct ConnexionAttempstSvc {
     private let repo: ConnexionAttemptRepository
+    private let logger: Logger
 
-    public init(repo: ConnexionAttemptRepository) {
+    public init(repo: ConnexionAttemptRepository, logger: Logger) {
         self.repo = repo
+        self.logger = logger
     }
 
     // MARK: - Read
@@ -27,20 +29,20 @@ public struct ConnexionAttempstSvc {
 
     // MARK: - Update
 
-    func incrementAndReturnCount(ip: String, mail: String) async throws -> Int {
-        try await repo.incrementAndReturnCount(ip: ip, mail: mail)
+    func incrementAndReturnCount(ip: String, keyId: String) async throws -> Int {
+        try await repo.incrementAndReturnCount(ip: ip, keyId: keyId)
     }
 
     // MARK: - delete
 
-    public func userIsLoged(_ mail: String, logger: Logger) async throws {
-        try await repo.delete(mail)
-        logger.warning("- ✅ user: \(mail) loged successfully")
+    public func userIsLoged(_ keyID: String) async throws {
+        try await repo.delete(keyID)
+        logger.warning("- ✅ user: \(keyID) loged successfully")
     }
 }
 
 extension Request {
     public var connexionAttempsSvc: ConnexionAttempstSvc {
-        .init(repo: .init(db: self.db))
+        .init(repo: .init(db: self.db), logger: self.logger)
     }
 }
