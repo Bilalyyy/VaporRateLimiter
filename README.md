@@ -142,14 +142,9 @@ Configure the rate limiter as needed (see documentation for advanced configurati
 
 ---
 
-## 🗄️ Database
+## ✍️ Contributing
 
-This package relies on Fluent/Postgres for persistent tracking.
-Ensure you have a working Postgres database and run the included migration:
-
-```swift
-app.migrations.add(RateLimiterMigration())
-```
+For contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
