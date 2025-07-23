@@ -8,7 +8,7 @@ Your help is welcome to improve, fix, or extend this middleware.
 - Fork the repository and create a new branch (`feature/my-feature` or `fix/my-bug`).
 - Make your changes and commit with clear messages.
 - Ensure all tests pass locally.
-- Open a Pull Request (PR) on the `main` branch, describing your changes and referencing any related issues.
+- Open a Pull Request (PR) targeting the main branch, describing your changes and referencing any related issues.
 
 ## Code style
 
