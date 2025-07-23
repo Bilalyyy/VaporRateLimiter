@@ -13,14 +13,14 @@ Your help is welcome to improve, fix, or extend this middleware.
 ## Code style
 
 - Follow the Swift API Design Guidelines.
-- Use 4 spaces for indentation.
 - Keep your code clean, readable, and well-commented.
 - Add documentation to new public methods or types.
 
 ## Tests
 
-- Add or update tests to cover your changes.
-- Run `swift test` to verify everything passes before opening a PR.
+- Add new tests to cover your changes.
+- **Do not modify or remove existing tests** unless you have a very good reason (for example, if the behavior they test has changed and you explain why in your pull request).
+- Run `swift test` to verify that all tests pass before opening a PR.
 
 ## Issues
 
