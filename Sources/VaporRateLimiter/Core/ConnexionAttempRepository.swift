@@ -31,7 +31,7 @@ extension ConnexionAttemptRepository {
         let query: SQLQueryString = """
         INSERT INTO connexion_attempts (id, ip, key_id, count, timestamp)
         VALUES (\(bind: UUID()), \(bind: ip), \(bind: keyId), 1, NOW())
-        ON CONFLICT (key_id)
+        ON CONFLICT (ip, key_id)
         DO UPDATE SET count = connexion_attempts.count + 1, timestamp = NOW()
         RETURNING count;
         """

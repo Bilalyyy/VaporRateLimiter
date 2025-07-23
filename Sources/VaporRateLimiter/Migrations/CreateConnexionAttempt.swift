@@ -18,11 +18,10 @@ public struct CreateConnexionAttempt: Migration {
             .field("key_id", .string, .required)
             .field("count", .int, .required)
             .field("timestamp", .datetime, .required)
-            .unique(on: "ip")
-            .unique(on: "key_id")
+            .unique(on: "ip", "key_id")
             .create()
     }
-    
+
     public func revert(on database: any FluentKit.Database) -> NIOCore.EventLoopFuture<Void> {
         database.schema(ConnexionAttempt.schema).delete()
     }
