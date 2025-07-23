@@ -114,7 +114,7 @@ You can customize this value to fit your security needs:
     let limitedRoutes = routes.grouped(RateLimiter(threshold: Int))
 ```
 
-> ⚠️ **Note:** For safety and convenience, the rate limiter middleware is disabled by default in the development environment.
+> ⚠️ **Note:** For safety and convenience, the rate limiter middleware is disabled in the development environment.
 
 
 ### Final Step: Clearing login attempts after successful authentication
