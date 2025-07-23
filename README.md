@@ -51,7 +51,7 @@ If you need to implement this, refer to the [official Vapor authentication docum
 Add this package to your `Package.swift` dependencies:
 
 ```swift
-    .package(url: "https://github.com/Bilalyyy/VaporRateLimiter", from: "0.0.5")
+    .package(url: "https://github.com/Bilalyyy/VaporRateLimiter", from: "1.0.0")
 ```
 
 And add `"VaporRateLimiter"` to your target dependencies.
