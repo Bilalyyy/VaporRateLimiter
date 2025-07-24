@@ -6,7 +6,7 @@
 # VaporRateLimiter
 
 <p align="center">
-  <img src="https://app-soon.com/wp-content/uploads/2025/07/RateLimiter-2.png" alt="VaporRateLimiter logo" width="180">
+  <img src="https://app-soon.com/wp-content/uploads/2025/07/VaporRateLimiter_Logo-2_516.png" alt="VaporRateLimiter logo" width="180">
 </p>
 
 
