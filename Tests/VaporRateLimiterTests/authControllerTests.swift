@@ -51,7 +51,7 @@ struct AuthControllerTests {
             let newUser = CreateUserReq(name: "Bilal", mail: "test@test.com", password: "pass")
             try await req.userSvc.create(from: newUser)
 
-            let attempt = ConnexionAttempt(ip: "127.0.0.1", keyId: "test@test.com", count: 2)
+            let attempt = VRLConnexionAttempt(ip: "127.0.0.1", keyId: "test@test.com", count: 2)
             try await attempt.save(on: req.db)
 
             let loginReq = LoginReq(mail: "test@test.com", password: "pass")
@@ -204,7 +204,7 @@ struct AuthControllerTests {
         try await withApp { app in
             let req = Request(application: app, on: app.db.eventLoop)
             // create attempt to simulate 2 fails
-            let attempt = ConnexionAttempt(ip: "127.0.0.1", keyId: "My_API_Key", count: 2)
+            let attempt = VRLConnexionAttempt(ip: "127.0.0.1", keyId: "My_API_Key", count: 2)
             try await attempt.save(on: req.db)
 
             let loginReq = LoginReqByAPI(apiKey: "My_API_Key", password: "pass")

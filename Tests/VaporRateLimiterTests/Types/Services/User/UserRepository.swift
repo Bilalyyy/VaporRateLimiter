@@ -7,7 +7,7 @@
 
 import VaporRateLimiter
 
-typealias UserRepository = FluentRepository<User>
+typealias UserRepository = VRLFluentRepository<User>
 
 extension UserRepository {
 

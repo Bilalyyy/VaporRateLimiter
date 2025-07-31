@@ -12,7 +12,7 @@ public struct CreateConnexionAttempt: Migration {
     public init() { }
 
     public func prepare(on database: any FluentKit.Database) -> NIOCore.EventLoopFuture<Void> {
-        database.schema(ConnexionAttempt.schema)
+        database.schema(VRLConnexionAttempt.schema)
             .id()
             .field("ip", .string, .required)
             .field("key_id", .string, .required)
@@ -23,6 +23,6 @@ public struct CreateConnexionAttempt: Migration {
     }
 
     public func revert(on database: any FluentKit.Database) -> NIOCore.EventLoopFuture<Void> {
-        database.schema(ConnexionAttempt.schema).delete()
+        database.schema(VRLConnexionAttempt.schema).delete()
     }
 }

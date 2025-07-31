@@ -19,11 +19,11 @@ public struct ConnexionAttempstSvc {
 
     // MARK: - Read
 
-    public func all() async throws -> [ConnexionAttempt] {
+    public func all() async throws -> [VRLConnexionAttempt] {
         try await repo.all()
     }
 
-    func findBy(ip: String, or mail: String) async throws -> ConnexionAttempt? {
+    func findBy(ip: String, or mail: String) async throws -> VRLConnexionAttempt? {
         try await repo.find(by: ip, or: mail)
     }
 

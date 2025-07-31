@@ -13,7 +13,7 @@ struct NewAttempt: Content {
 }
 
 extension NewAttempt {
-    func toModel() -> ConnexionAttempt {
+    func toModel() -> VRLConnexionAttempt {
         .init(ip: ip, keyId: mail, count: 1)
     }
 }

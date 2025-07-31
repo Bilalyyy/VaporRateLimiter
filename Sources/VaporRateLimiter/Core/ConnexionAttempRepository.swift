@@ -5,17 +5,18 @@
 //  Created by Bilal Larose on 17/07/2025.
 //
 
+import Foundation
 import Fluent
 import SQLKit
 
-public typealias ConnexionAttemptRepository = FluentRepository<ConnexionAttempt>
+public typealias ConnexionAttemptRepository = VRLFluentRepository<VRLConnexionAttempt>
 
 // MARK: - CRUD
 extension ConnexionAttemptRepository {
 
     // MARK: - Read
 
-    func find(by ip: String, or keyId: String) async throws -> ConnexionAttempt? {
+    func find(by ip: String, or keyId: String) async throws -> VRLConnexionAttempt? {
         try await M.query(on: db)
             .group(.or) { group in
                 group.filter((\.$ip == ip))

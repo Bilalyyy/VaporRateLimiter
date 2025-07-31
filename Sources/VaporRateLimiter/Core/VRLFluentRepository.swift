@@ -5,9 +5,10 @@
 //  Created by Bilal Larose on 21/07/2025.
 //
 
+import Foundation
 import Fluent
 
-public struct FluentRepository<M: Model>: CRUDProtocol where M.IDValue == UUID {
+public struct VRLFluentRepository<M: Model>: VRLCRUDProtocol where M.IDValue == UUID {
 
     typealias Entity = M
     public let db: any Database

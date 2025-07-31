@@ -24,7 +24,7 @@ struct RateMiddlewareTests {
     func testAllowsRequestsUnderThreshold() async throws {
         try await withApp { app in
             // Simulates a user with only 3 attempts (< threshold 5)
-            let attempts = ConnexionAttempt.createAnAttempt(count: 3)
+            let attempts = VRLConnexionAttempt.createAnAttempt(count: 3)
 
             try await attempts.save(on: app.db)
 
@@ -45,7 +45,7 @@ struct RateMiddlewareTests {
     func testBlocksRequestsAboveThreshold() async throws {
         try await withApp { app in
             // Simulates a user with 7 attempts (threshold = 5)
-            let attempts = ConnexionAttempt.createAnAttempt(count: 7)
+            let attempts = VRLConnexionAttempt.createAnAttempt(count: 7)
 
             try await attempts.save(on: app.db)
 

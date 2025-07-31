@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol CRUDProtocol {
+protocol VRLCRUDProtocol {
     associatedtype Entity
 
     func all() async throws -> [Entity]

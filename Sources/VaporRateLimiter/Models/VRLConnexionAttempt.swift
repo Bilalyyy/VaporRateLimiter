@@ -8,7 +8,7 @@
 import Vapor
 import Fluent
 
-public final class ConnexionAttempt: Model, @unchecked Sendable {
+public final class VRLConnexionAttempt: Model, @unchecked Sendable {
     public static let schema = "connexion_attempts"
 
     @ID(key: .id)
@@ -37,7 +37,7 @@ public final class ConnexionAttempt: Model, @unchecked Sendable {
     }
 }
 
-extension ConnexionAttempt {
+extension VRLConnexionAttempt {
     func toDto() -> ConnexionAttemptDto {
         return .init(id: id, count: count, timestamp: timestamp ?? .now)
     }
