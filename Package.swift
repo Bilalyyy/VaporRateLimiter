@@ -29,6 +29,6 @@ let package = Package(
                 .product(name: "Fluent", package: "fluent"),
                 .product(name: "FluentPostgresDriver", package: "fluent-postgres-driver"),
             ],
-        ),
+        )
     ]
 )
