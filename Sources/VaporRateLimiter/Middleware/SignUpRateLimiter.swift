@@ -43,9 +43,9 @@ public final class SignUpRateLimiter: AsyncMiddleware {
             return try await next.respond(to: request)
         }
 
-        request.logger.warning("⚠️ user: \(keyToRegister) - ip: \(userIP) locked for \(penaltyCalculator(lastAttempt.count, threshold: threshold)) seconds after \(count) sign in attempts")
+        request.logger.warning("⚠️ user: \(keyToRegister) - ip: \(userIP) locked for \(penaltyCalculator(lastAttempt.count, baseTimeFrame: baseTimeFrame, threshold: threshold)) seconds after \(count) sign in attempts")
 
-        throw Abort(.tooManyRequests, reason: "Too many sign in. Try again after \(penaltyCalculator(count, threshold: threshold)) seconds.")
+        throw Abort(.tooManyRequests, reason: "Too many sign in. Try again after \(penaltyCalculator(count, baseTimeFrame: baseTimeFrame, threshold: threshold)) seconds.")
     }
 
 }
