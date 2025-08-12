@@ -17,6 +17,7 @@ public struct CreateSignUpAttempt: Migration {
         database.schema(VRLSignUpAttempt.schema)
             .id()
             .field("ip", .string, .required)
+            .field("key_to_register", .string, .required)
             .field("count", .int, .required)
             .field("timestamp", .datetime, .required)
             .unique(on: "ip")

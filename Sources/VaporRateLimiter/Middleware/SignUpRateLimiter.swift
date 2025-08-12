@@ -23,7 +23,7 @@ public final class SignUpRateLimiter: AsyncMiddleware {
 
     public func respond(to request: Vapor.Request, chainingTo next: any Vapor.AsyncResponder) async throws -> Vapor.Response {
         let userIP = fetchIPBucket(request)
-        let mail = try? request.content.get(String.self, at: keyToRegister)
+        let keyToRegister = try request.content.get(String.self, at: keyToRegister)
         let currentTime = Date()
 
         guard request.application.environment != .development else {
@@ -31,9 +31,9 @@ public final class SignUpRateLimiter: AsyncMiddleware {
         }
 
         // TODO: update incrementAndReturnCount() to incrementAndReturnConnexionAttemptDto()
-        let count = try await request.signUpAttempsSvc.incrementAndReturnCount(ip: userIP)
+        let count = try await request.signUpAttempsSvc.incrementAndReturnCount(ip: userIP, mail: keyToRegister)
 
-        request.logger.warning("- \(currentTime) user: \(mail ?? "unknown"); ip : \(userIP) try to sign in for \(count) time(s)")
+        request.logger.warning("- \(currentTime) user: \(keyToRegister); ip : \(userIP) try to sign in for \(count) time(s)")
 
         guard let lastAttempt = try await request.signUpAttempsSvc.findBy(ip: userIP) else {
             throw Abort(.notFound, reason: "no attempt found")
@@ -43,7 +43,7 @@ public final class SignUpRateLimiter: AsyncMiddleware {
             return try await next.respond(to: request)
         }
 
-        request.logger.warning("⚠️ user: \(mail ?? "unknown") - ip: \(userIP) locked for \(penaltyCalculator(lastAttempt.count, threshold: threshold)) seconds after \(count) sign in attempts")
+        request.logger.warning("⚠️ user: \(keyToRegister) - ip: \(userIP) locked for \(penaltyCalculator(lastAttempt.count, threshold: threshold)) seconds after \(count) sign in attempts")
 
         throw Abort(.tooManyRequests, reason: "Too many sign in. Try again after \(penaltyCalculator(count, threshold: threshold)) seconds.")
     }

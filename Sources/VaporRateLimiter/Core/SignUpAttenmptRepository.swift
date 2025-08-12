@@ -26,11 +26,11 @@ extension SignUpAttemptRepository {
 
     // MARK: - Update
 
-    func incrementAndReturnCount(ip: String) async throws -> Int {
+    func incrementAndReturnCount(ip: String, mail: String) async throws -> Int {
         let sql = db as! any SQLDatabase
         let query: SQLQueryString = """
-        INSERT INTO sign_up_attempts (id, ip, count, timestamp)
-        VALUES (\(bind: UUID()), \(bind: ip), 1, NOW())
+        INSERT INTO sign_up_attempts (id, ip, key_to_register, count, timestamp)
+        VALUES (\(bind: UUID()), \(bind: ip), \(bind: mail), 1, NOW())
         ON CONFLICT (ip)
         DO UPDATE SET count = sign_up_attempts.count + 1,
                       timestamp = NOW()

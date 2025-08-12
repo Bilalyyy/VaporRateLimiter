@@ -17,6 +17,9 @@ public final class VRLSignUpAttempt: Model, @unchecked Sendable {
     @Field(key: "ip")
     public var ip: String
 
+    @Field(key: "key_to_register")
+    public var keyToRegister: String?
+
     @Field(key: "count")
     public var count: Int
 
@@ -25,9 +28,10 @@ public final class VRLSignUpAttempt: Model, @unchecked Sendable {
 
     public init() { }
 
-    public init(id: UUID? = nil, ip: String, count: Int, timestamp: Date? = nil) {
+    public init(id: UUID? = nil, ip: String, keyToRegister: String, count: Int, timestamp: Date? = nil) {
         self.id = id
         self.ip = ip
+        self.keyToRegister = keyToRegister
         self.count = count
         self.timestamp = timestamp
     }
@@ -39,6 +43,6 @@ extension VRLSignUpAttempt {
     }
 
     static func createAnAttempt(count: Int) -> Self {
-        .init(ip: "127.0.0.0/24", count: count)
+        .init(ip: "127.0.0.0/24", keyToRegister: "test@mail.fr", count: count)
     }
 }

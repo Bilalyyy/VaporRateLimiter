@@ -95,7 +95,7 @@ func withApp(_ test: @escaping (Application) async throws -> Void) async throws 
         let routes3 = app.routes.grouped("test-ip")
         let protected = routes3.grouped(SignUpRateLimiter())
         protected.post("sign-up") { req async throws -> HTTPStatus in
-            let content = try req.content.decode(SignUpReq.self)
+            let _ = try req.content.decode(SignUpReq.self)
 
             return .ok
         }

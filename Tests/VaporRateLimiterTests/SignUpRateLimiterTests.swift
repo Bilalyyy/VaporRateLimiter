@@ -24,7 +24,7 @@ struct SignUpRateLimiterTests {
             let attempts = VRLConnexionAttempt.createAnAttempt(count: 1)
             try await attempts.save(on: app.db)
 
-            let signinReq: SignUpReq = .init(ip: attempts.ip)
+            let signinReq: SignUpReq = .init(ip: attempts.ip, mail: "test@mail.com")
 
             try await app.testing().test(.POST, "test-ip/sign-up", beforeRequest: { req in
                 try req.content.encode(signinReq)
@@ -43,7 +43,7 @@ struct SignUpRateLimiterTests {
             let attempts = VRLSignUpAttempt.createAnAttempt(count: 3)
             try await attempts.save(on: app.db)
 
-            let signinReq: SignUpReq = .init(ip: attempts.ip)
+            let signinReq: SignUpReq = .init(ip: attempts.ip, mail: "test@mail.com")
 
             try await app.testing().test(.POST, "test-ip/sign-up", beforeRequest: { req in
                 try req.content.encode(signinReq)

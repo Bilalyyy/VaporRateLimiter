@@ -29,8 +29,8 @@ public struct SignUpAttempstSvc {
 
     // MARK: - Update
 
-    func incrementAndReturnCount(ip: String) async throws -> Int {
-        try await repo.incrementAndReturnCount(ip: ip)
+    func incrementAndReturnCount(ip: String, mail: String) async throws -> Int {
+        try await repo.incrementAndReturnCount(ip: ip, mail: mail)
     }
 
     // MARK: - delete

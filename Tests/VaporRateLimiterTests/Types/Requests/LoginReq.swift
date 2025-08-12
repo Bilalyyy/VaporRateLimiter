@@ -14,4 +14,5 @@ struct LoginReq: Content {
 
 struct SignUpReq: Content {
     let ip: String
+    let mail: String
 }
