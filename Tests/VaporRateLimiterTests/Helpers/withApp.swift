@@ -38,6 +38,7 @@ func withApp(_ test: @escaping (Application) async throws -> Void) async throws 
 
         // MARK: - Package Migrations
         app.migrations.add(CreateConnexionAttempt())
+        app.migrations.add(CreateSignUpAttempt())
 
         try await app.autoMigrate()
 
@@ -91,48 +92,12 @@ func withApp(_ test: @escaping (Application) async throws -> Void) async throws 
             }
         }
 
-        let limitedRoutes2 = routes1.grouped(SignUpRateLimiter())
-        limitedRoutes2.post("sign-up") { req async throws -> HTTPStatus in
-            let content = try req.content.decode(LoginReq.self)
+        let routes3 = app.routes.grouped("test-ip")
+        let protected = routes3.grouped(SignUpRateLimiter())
+        protected.post("sign-up") { req async throws -> HTTPStatus in
+            let content = try req.content.decode(SignUpReq.self)
 
-            do {
-                let userCanLogin = try await req.authSvc.canLogin(from: content)
-                try await req.connexionAttempsSvc.userIsLoged(userCanLogin.mail)
-                req.authSvc.login(auth: req.auth, user: userCanLogin)
-
-                return .ok
-            } catch let error as AuthSvc.AuthError {
-                switch error {
-                case .authFailled:
-                    throw Abort(.unauthorized, reason: "Incorrect username or password")
-                }
-            } catch {
-                // Pour tout autre type d'erreur, retourne une erreur générique
-                throw Abort(.internalServerError, reason: "An unexpected error has occurred")
-            }
-        }
-
-
-        let limitedWithAPIKey2 = routes2.grouped(LoginRateLimiter(keyToRegister: "apiKey"))
-        limitedWithAPIKey2.post("sign-up") { req async throws -> HTTPStatus in
-
-            let content = try req.content.decode(LoginReqByAPI.self)
-
-            do {
-                // ... authentication logic ...
-                // ... simulate user is authenticated
-                try await req.connexionAttempsSvc.userIsLoged(content.apiKey)
-
-                return .ok
-            } catch let error as AuthSvc.AuthError {
-                switch error {
-                case .authFailled:
-                    throw Abort(.unauthorized, reason: "Incorrect username or password")
-                }
-            } catch {
-                // Pour tout autre type d'erreur, retourne une erreur générique
-                throw Abort(.internalServerError, reason: "An unexpected error has occurred")
-            }
+            return .ok
         }
 
         // MARK: - Tests

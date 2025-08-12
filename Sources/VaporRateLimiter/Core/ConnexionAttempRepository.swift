@@ -52,13 +52,3 @@ extension ConnexionAttemptRepository {
             .delete()
     }
 }
-
-// MARK: - Utilities
-
-extension ConnexionAttemptRepository {
-    struct AttemptRow: Decodable { let count: Int }
-
-    enum FluentError: Error {
-        case internalServerError(String)
-    }
-}

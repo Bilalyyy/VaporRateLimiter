@@ -1,5 +1,5 @@
 //
-//  ConnexionAttempsDto.swift
+//  AttempsDto.swift
 //  RateLimitMiddleware
 //
 //  Created by Bilal Larose on 17/07/2025.
@@ -7,7 +7,7 @@
 
 import Vapor
 
-struct ConnexionAttemptDto: Content {
+struct AttemptDto: Content {
     let id: UUID?
     let count: Int
     let timestamp: Date

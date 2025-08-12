@@ -48,3 +48,13 @@ public struct VRLFluentRepository<M: Model>: VRLCRUDProtocol where M.IDValue == 
     }
 
 }
+
+// MARK: - Utilities
+
+extension VRLFluentRepository {
+    struct AttemptRow: Decodable { let count: Int }
+
+    enum FluentError: Error {
+        case internalServerError(String)
+    }
+}

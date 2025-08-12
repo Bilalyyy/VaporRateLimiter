@@ -23,7 +23,7 @@ public final class SignUpRateLimiter: AsyncMiddleware {
 
     public func respond(to request: Vapor.Request, chainingTo next: any Vapor.AsyncResponder) async throws -> Vapor.Response {
         let userIP = fetchIPBucket(request)
-        let keyId = try request.content.get(String.self, at: keyToRegister)
+        let mail = try? request.content.get(String.self, at: keyToRegister)
         let currentTime = Date()
 
         guard request.application.environment != .development else {
@@ -31,20 +31,19 @@ public final class SignUpRateLimiter: AsyncMiddleware {
         }
 
         // TODO: update incrementAndReturnCount() to incrementAndReturnConnexionAttemptDto()
-        let count = try await request.connexionAttempsSvc.incrementAndReturnCount(ip: userIP, keyId: keyId)
+        let count = try await request.signUpAttempsSvc.incrementAndReturnCount(ip: userIP)
 
-        request.logger.warning("- \(currentTime) user: \(keyId); ip : \(userIP) try to sign in for \(count) time(s)")
+        request.logger.warning("- \(currentTime) user: \(mail ?? "unknown"); ip : \(userIP) try to sign in for \(count) time(s)")
 
-        guard let lastAttempt = try await request.connexionAttempsSvc.findBy(ip: userIP,
-                                                                             or: keyId) else {
+        guard let lastAttempt = try await request.signUpAttempsSvc.findBy(ip: userIP) else {
             throw Abort(.notFound, reason: "no attempt found")
         }
 
-        guard lastAttempt.count >= threshold && isPenaltyActive(for: lastAttempt.toDto(), baseTimeFrame: 60, threshold: threshold) else {
+        guard lastAttempt.count >= threshold && isPenaltyActive(for: lastAttempt.toDto(), baseTimeFrame: baseTimeFrame, threshold: threshold) else {
             return try await next.respond(to: request)
         }
 
-        request.logger.warning("⚠️ user: \(keyId) - ip: \(userIP) locked for \(penaltyCalculator(lastAttempt.count, threshold: threshold)) seconds after \(count) sign in attempts")
+        request.logger.warning("⚠️ user: \(mail ?? "unknown") - ip: \(userIP) locked for \(penaltyCalculator(lastAttempt.count, threshold: threshold)) seconds after \(count) sign in attempts")
 
         throw Abort(.tooManyRequests, reason: "Too many sign in. Try again after \(penaltyCalculator(count, threshold: threshold)) seconds.")
     }
@@ -64,7 +63,7 @@ func penaltyCalculator(_ nbrAttempts: Int, baseTimeFrame: TimeInterval = 60, thr
     return penality
 }
 
-func isPenaltyActive(for lastAttempt: ConnexionAttemptDto, baseTimeFrame: TimeInterval, now: Date = Date(), threshold: Int) -> Bool {
+func isPenaltyActive(for lastAttempt: AttemptDto, baseTimeFrame: TimeInterval, now: Date = Date(), threshold: Int) -> Bool {
     let penalty = penaltyCalculator(lastAttempt.count, baseTimeFrame: baseTimeFrame, threshold: threshold)
     // 'true' if the penalty is still active (waiting period not elapsed)
     return lastAttempt.count >= threshold && now.timeIntervalSince(lastAttempt.timestamp) < penalty

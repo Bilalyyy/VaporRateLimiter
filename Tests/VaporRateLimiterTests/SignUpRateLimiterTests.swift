@@ -24,13 +24,13 @@ struct SignUpRateLimiterTests {
             let attempts = VRLConnexionAttempt.createAnAttempt(count: 1)
             try await attempts.save(on: app.db)
 
-            let signinReq: LoginReq = .init(mail: attempts.keyId, password: "pass")
+            let signinReq: SignUpReq = .init(ip: attempts.ip)
 
-            try await app.testing().test(.POST, "testWithMail/sign-up", beforeRequest: { req in
+            try await app.testing().test(.POST, "test-ip/sign-up", beforeRequest: { req in
                 try req.content.encode(signinReq)
                 req.headers.replaceOrAdd(name: .init("X-Forwarded-For"), value: "127.0.0.42")
             }, afterResponse: { res async throws in
-                #expect(res.status == .unauthorized)
+                #expect(res.status == .ok)
 
             })
         }
@@ -40,14 +40,14 @@ struct SignUpRateLimiterTests {
     func testBlocksRequestsAboveThreshold() async throws {
         try await withApp { app in
             // Simulate a user already over the threshold (e.g., 3 attempts)
-            let attempts = VRLConnexionAttempt.createAnAttempt(count: 3)
+            let attempts = VRLSignUpAttempt.createAnAttempt(count: 3)
             try await attempts.save(on: app.db)
 
-            let signinReq: LoginReq = .init(mail: attempts.keyId, password: "pass")
+            let signinReq: SignUpReq = .init(ip: attempts.ip)
 
-            try await app.testing().test(.POST, "testWithMail/sign-up", beforeRequest: { req in
+            try await app.testing().test(.POST, "test-ip/sign-up", beforeRequest: { req in
                 try req.content.encode(signinReq)
-                req.headers.replaceOrAdd(name: .init("X-Forwarded-For"), value: "127.0.0.21")
+                req.headers.replaceOrAdd(name: .init("X-Forwarded-For"), value: "127.0.0.1")
             }, afterResponse: { res async throws in
                 let bodyString = res.body.string
                 #expect(bodyString.contains("Too many sign in"))
@@ -61,7 +61,7 @@ struct SignUpRateLimiterTests {
         try await withApp { app in
             let signinReq: LoginReq = .init(mail: "test-signin@test.com", password: "pass")
             
-            try await app.testing().test(.POST, "testWithMail/sign-up", beforeRequest: { req in
+            try await app.testing().test(.POST, "test-ip/sign-up", beforeRequest: { req in
                 try req.content.encode(signinReq)
                 req.headers.replaceOrAdd(name: .init("X-Forwarded-For"), value: "127.0.0.9")
             }, afterResponse: { res async throws in
@@ -74,7 +74,7 @@ struct SignUpRateLimiterTests {
     @Test("penalty is active during penalty window and lifted after delay (threshold=2)")
     func testPenaltyActiveAndLiftedAfterDelay() async throws {
         // For threshold=2, the first penalty step is 60s at 2 attempts
-        let attempt = ConnexionAttemptDto(id: UUID(), count: 2, timestamp: .now)
+        let attempt = AttemptDto(id: UUID(), count: 2, timestamp: .now)
         
         let active = isPenaltyActive(for: attempt, baseTimeFrame: 240, now: .now.addingTimeInterval(30), threshold: 2)
         let lifted = isPenaltyActive(for: attempt, baseTimeFrame: 240, now: .now.addingTimeInterval(250), threshold: 2)

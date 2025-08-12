@@ -80,7 +80,7 @@ struct LoginRateMiddlewareTests {
 
     @Test("penalty is active during penalty window and lifted after delay")
     func testPenaltyActiveAndLiftedAfterDelay() async throws {
-        let attempt = ConnexionAttemptDto(id: UUID(), count: 5, timestamp: .now)
+        let attempt = AttemptDto(id: UUID(), count: 5, timestamp: .now)
 
         let penaltyIsActive = isPenaltyActive(for: attempt, baseTimeFrame: 60,
                                               now: .now.addingTimeInterval(30), threshold: 5)
