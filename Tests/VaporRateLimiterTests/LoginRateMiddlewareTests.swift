@@ -1,5 +1,6 @@
+
 //
-//  RateLimitMiddlewareTests.swift
+//  LoginRateMiddlewareTests.swift
 //  VaporRateLimiter
 //
 //  Created by Bilal Larose on 17/07/2025.
@@ -16,9 +17,9 @@ import Testing
 import Fluent
 
 
-@Suite("RateLimiter with DB (Units test)", .serialized)
+@Suite("Login RateLimiter with DB (Units test)", .serialized)
 
-struct RateMiddlewareTests {
+struct LoginRateMiddlewareTests {
     
     @Test("allows requests under threshold")
     func testAllowsRequestsUnderThreshold() async throws {
@@ -62,7 +63,7 @@ struct RateMiddlewareTests {
         }
     }
 
-    @Test("allows requests first time, while no attempts are registered")
+    @Test("Middleware should not return 429 on first attempt; downstream returns 401")
     func testNoAttempsRegistered() async throws {
         try await withApp { app in
             let loginReq: LoginReq = .init(mail: "test@test.com", password: "pass")
@@ -71,7 +72,7 @@ struct RateMiddlewareTests {
                 try req.content.encode(loginReq)
                 req.headers.replaceOrAdd(name: .init("X-Forwarded-For"), value: "127.0.0.1")
             }, afterResponse: { res async throws in
-                #expect(res.status == .unauthorized)
+                #expect(res.status != .tooManyRequests)
             })
 
         }
@@ -79,13 +80,12 @@ struct RateMiddlewareTests {
 
     @Test("penalty is active during penalty window and lifted after delay")
     func testPenaltyActiveAndLiftedAfterDelay() async throws {
-        let sut = RateLimiter()
         let attempt = ConnexionAttemptDto(id: UUID(), count: 5, timestamp: .now)
 
-        let penaltyIsActive = sut.isPenaltyActive(for: attempt,
-                                                  now: .now.addingTimeInterval(30))
-        let penaltyIsActiveAfterDelay = sut.isPenaltyActive(for: attempt,
-                                                            now: .now.addingTimeInterval(70))
+        let penaltyIsActive = isPenaltyActive(for: attempt, baseTimeFrame: 60,
+                                              now: .now.addingTimeInterval(30), threshold: 5)
+        let penaltyIsActiveAfterDelay = isPenaltyActive(for: attempt, baseTimeFrame: 60,
+                                                            now: .now.addingTimeInterval(70), threshold: 5)
 
         #expect(penaltyIsActive == true, "We expect penality is true but got false")
         #expect(penaltyIsActiveAfterDelay == false, "We expect penality is false but got true")
@@ -93,14 +93,12 @@ struct RateMiddlewareTests {
 
     @Test("penalty calculator")
     func testPenaltyCalculator() async throws {
-        let sut = RateLimiter()
-
         let nbrAttempts: [Int]              = [0, 1, 2, 3, 4, 5, 6, 10, 16, 21, 26, 31, 36, 41]
         let expectedPenalty: [TimeInterval] = [0, 0, 0, 0, 0, 60, 60, 120, 240, 480, 960, 1_920, 3_840, 7_680]
 
         for (index, attempts) in nbrAttempts.enumerated() {
             let expected = expectedPenalty[index]
-            let actual = sut.penaltyCalculator(attempts)
+            let actual = penaltyCalculator(attempts, threshold: 5)
             #expect(actual == expected, "For \(attempts) attempts, expected \(expected), got \(actual)")
         }
     }

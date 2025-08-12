@@ -47,7 +47,7 @@ func withApp(_ test: @escaping (Application) async throws -> Void) async throws 
         let routes1 = app.routes.grouped("testWithMail")
         let routes2 = app.routes.grouped("testWithAPI")
 
-        let limitedRoutes = routes1.grouped(RateLimiter())
+        let limitedRoutes = routes1.grouped(LoginRateLimiter())
         limitedRoutes.post("login") { req async throws -> HTTPStatus in
             let content = try req.content.decode(LoginReq.self)
 
@@ -69,7 +69,7 @@ func withApp(_ test: @escaping (Application) async throws -> Void) async throws 
         }
 
 
-        let limitedWithAPIKey = routes2.grouped(RateLimiter(keyToRegister: "apiKey"))
+        let limitedWithAPIKey = routes2.grouped(LoginRateLimiter(keyToRegister: "apiKey"))
         limitedWithAPIKey.post("login") { req async throws -> HTTPStatus in
 
             let content = try req.content.decode(LoginReqByAPI.self)
