@@ -45,9 +45,9 @@ extension SignUpAttemptRepository {
 
     // MARK: - delete
 
-    func delete(_ ip: String) async throws {
+    func delete(_ key: String) async throws {
         try await M.query(on: db)
-            .filter(\.$ip == ip)
+            .filter(\.$keyToRegister == key)
             .delete()
     }
 }
