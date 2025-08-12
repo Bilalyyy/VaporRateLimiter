@@ -33,7 +33,7 @@ public final class SignUpRateLimiter: AsyncMiddleware {
         // TODO: update incrementAndReturnCount() to incrementAndReturnConnexionAttemptDto()
         let count = try await request.signUpAttempsSvc.incrementAndReturnCount(ip: userIP, mail: keyToRegister)
 
-        request.logger.warning("- \(currentTime) user: \(keyToRegister); ip : \(userIP) try to sign in for \(count) time(s)")
+        request.logger.warning("- \(currentTime) user: \(keyToRegister); ip : \(userIP) try to sign up for \(count) time(s)")
 
         guard let lastAttempt = try await request.signUpAttempsSvc.findBy(ip: userIP) else {
             throw Abort(.notFound, reason: "no attempt found")
@@ -43,9 +43,9 @@ public final class SignUpRateLimiter: AsyncMiddleware {
             return try await next.respond(to: request)
         }
 
-        request.logger.warning("⚠️ user: \(keyToRegister) - ip: \(userIP) locked for \(penaltyCalculator(lastAttempt.count, baseTimeFrame: baseTimeFrame, threshold: threshold)) seconds after \(count) sign in attempts")
+        request.logger.warning("⚠️ user: \(keyToRegister) - ip: \(userIP) locked for \(penaltyCalculator(lastAttempt.count, baseTimeFrame: baseTimeFrame, threshold: threshold)) seconds after \(count) sign up attempts")
 
-        throw Abort(.tooManyRequests, reason: "Too many sign in. Try again after \(penaltyCalculator(count, baseTimeFrame: baseTimeFrame, threshold: threshold)) seconds.")
+        throw Abort(.tooManyRequests, reason: "Too many sign up. Try again after \(penaltyCalculator(count, baseTimeFrame: baseTimeFrame, threshold: threshold)) seconds.")
     }
 
 }
