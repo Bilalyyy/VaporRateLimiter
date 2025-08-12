@@ -91,6 +91,50 @@ func withApp(_ test: @escaping (Application) async throws -> Void) async throws 
             }
         }
 
+        let limitedRoutes2 = routes1.grouped(SignUpRateLimiter())
+        limitedRoutes2.post("sign-up") { req async throws -> HTTPStatus in
+            let content = try req.content.decode(LoginReq.self)
+
+            do {
+                let userCanLogin = try await req.authSvc.canLogin(from: content)
+                try await req.connexionAttempsSvc.userIsLoged(userCanLogin.mail)
+                req.authSvc.login(auth: req.auth, user: userCanLogin)
+
+                return .ok
+            } catch let error as AuthSvc.AuthError {
+                switch error {
+                case .authFailled:
+                    throw Abort(.unauthorized, reason: "Incorrect username or password")
+                }
+            } catch {
+                // Pour tout autre type d'erreur, retourne une erreur générique
+                throw Abort(.internalServerError, reason: "An unexpected error has occurred")
+            }
+        }
+
+
+        let limitedWithAPIKey2 = routes2.grouped(LoginRateLimiter(keyToRegister: "apiKey"))
+        limitedWithAPIKey2.post("sign-up") { req async throws -> HTTPStatus in
+
+            let content = try req.content.decode(LoginReqByAPI.self)
+
+            do {
+                // ... authentication logic ...
+                // ... simulate user is authenticated
+                try await req.connexionAttempsSvc.userIsLoged(content.apiKey)
+
+                return .ok
+            } catch let error as AuthSvc.AuthError {
+                switch error {
+                case .authFailled:
+                    throw Abort(.unauthorized, reason: "Incorrect username or password")
+                }
+            } catch {
+                // Pour tout autre type d'erreur, retourne une erreur générique
+                throw Abort(.internalServerError, reason: "An unexpected error has occurred")
+            }
+        }
+
         // MARK: - Tests
 
         try await test(app)
