@@ -41,10 +41,11 @@ public final class LoginRateLimiter: AsyncMiddleware {
         guard lastAttempt.count >= threshold && isPenaltyActive(for: lastAttempt.toDto(), baseTimeFrame: baseTimeFrame, threshold: threshold) else {
             return try await next.respond(to: request)
         }
+        let penality = penaltyCalculator(lastAttempt.count, threshold: threshold)
 
-        request.logger.warning("⚠️ user: \(keyId) locked for \(penaltyCalculator(lastAttempt.count, threshold: threshold)) seconds after \(count) failed attempts")
+        request.logger.warning("⚠️ user: \(keyId) locked for \(penaltyCalculator(penality)) seconds after \(count) failed attempts")
 
-        throw Abort(.tooManyRequests, reason: "Too many attempts. Try again after \(penaltyCalculator(count, threshold: threshold)) seconds.")
+        throw Abort(.tooManyRequests, reason: "Too many attempts. Try again after \(penaltyCalculator(penality)) seconds.")
     }
 
 }

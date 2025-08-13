@@ -25,12 +25,11 @@ public final class SignUpRateLimiter: AsyncMiddleware {
         let userIP = fetchIPBucket(request)
         let keyToRegister = try request.content.get(String.self, at: keyToRegister)
         let currentTime = Date()
-
+    
         guard request.application.environment != .development else {
             return try await next.respond(to: request)
         }
 
-        // TODO: update incrementAndReturnCount() to incrementAndReturnConnexionAttemptDto()
         let count = try await request.signUpAttempsSvc.incrementAndReturnCount(ip: userIP, mail: keyToRegister)
 
         request.logger.warning("- \(currentTime) user: \(keyToRegister); ip : \(userIP) try to sign up for \(count) time(s)")
@@ -43,9 +42,11 @@ public final class SignUpRateLimiter: AsyncMiddleware {
             return try await next.respond(to: request)
         }
 
-        request.logger.warning("⚠️ user: \(keyToRegister) - ip: \(userIP) locked for \(penaltyCalculator(lastAttempt.count, baseTimeFrame: baseTimeFrame, threshold: threshold)) seconds after \(count) sign up attempts")
+        let penality = penaltyCalculator(lastAttempt.count, baseTimeFrame: baseTimeFrame, threshold: threshold)
 
-        throw Abort(.tooManyRequests, reason: "Too many sign up. Try again after \(penaltyCalculator(count, baseTimeFrame: baseTimeFrame, threshold: threshold)) seconds.")
+        request.logger.warning("⚠️ user: \(keyToRegister) - ip: \(userIP) locked for \(penaltyCalculator(penality)) seconds after \(count) sign up attempts")
+
+        throw Abort(.tooManyRequests, reason: "Too many sign up. Try again after \(penaltyCalculator(penality)) seconds.")
     }
 
 }
@@ -54,13 +55,30 @@ func penaltyCalculator(_ nbrAttempts: Int, baseTimeFrame: TimeInterval = 60, thr
     guard nbrAttempts >= threshold else {
         return 0
     }
+    // Hard cap: 5 years in seconds (approx 365 days/year)
+    let maxPenalty: TimeInterval = 5 * 365 * 24 * 3600
 
     let palier = (nbrAttempts - threshold) / threshold
     let exponent = max(0, palier + 1)
 
     let penality = baseTimeFrame * pow(2.0, Double(exponent - 1))
 
-    return penality
+    if penality <= maxPenalty {
+        return penality
+    }
+
+    let jittered = maxPenalty * Double.random(in: 1.0...1.7)
+    return jittered
+}
+
+func penaltyCalculator(_ penality: TimeInterval) -> String {
+    let maxPenalty: TimeInterval = 5 * 365 * 24 * 3600 // 5 years in seconds
+
+    if penality <= maxPenalty {
+        return String(penality)
+    } else {
+        return "more than \(maxPenalty)"
+    }
 }
 
 func isPenaltyActive(for lastAttempt: AttemptDto, baseTimeFrame: TimeInterval, now: Date = Date(), threshold: Int) -> Bool {

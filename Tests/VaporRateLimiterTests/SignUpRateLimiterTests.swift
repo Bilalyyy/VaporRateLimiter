@@ -50,7 +50,7 @@ struct SignUpRateLimiterTests {
                 req.headers.replaceOrAdd(name: .init("X-Forwarded-For"), value: "127.0.0.1")
             }, afterResponse: { res async throws in
                 let bodyString = res.body.string
-                #expect(bodyString.contains("Too many sign in"))
+                #expect(bodyString.contains("Too many sign up"))
                 #expect(res.status == .tooManyRequests)
             })
         }
