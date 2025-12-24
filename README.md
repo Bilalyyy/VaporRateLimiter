@@ -26,7 +26,7 @@
 
 - Limits the number of login attempts per IP and email
 - Gentle with legitimate users who make mistakes, relentless with attackers
-- Exponential penalty increases after each set of 5 consecutive failed attempts (60, 120, 240, 480... seconds)
+- Exponential penalty increases after each set of consecutive failed attempts (customizable base time frame)
 - Effectively protects against brute-force attacks, even when facing advanced techniques such as massive, concurrent (parallel) request attempts.
 - Logs all suspicious activities and lockouts
 - Easy integration into any existing Vapor project
@@ -63,11 +63,12 @@ And add `"VaporRateLimiter"` to your target dependencies.
 
 ## ⚙️ Configuration
 
-### Step 1: Add the ConnexionAttempt model migration
+### Step 1: Add the migrations
 
 To work properly, VaporRateLimiter requires a new model in your database to track login attempts.
 This means you need to run a migration.
 Make sure to add `CreateConnexionAttempt()` to your migration list.
+If you want to use the sign-up rate limiter, add `CreateSignUpAttempt()` as well.
 For example, in your `configure.swift` file:
 
 ```swift
@@ -80,6 +81,7 @@ public func configure(_ app: Application) async throws {
     //...
 
     app.migrations.add(CreateConnexionAttempt())
+    app.migrations.add(CreateSignUpAttempt())
 
     //...
 
@@ -89,6 +91,7 @@ public func configure(_ app: Application) async throws {
 ### Step 2: Protect your login endpoint with the middleware
 
 Apply the `RateLimiter` middleware to your login route to enable brute-force protection.
+Apply the `LoginRateLimiter` middleware to your login route to enable brute-force protection.
 For example:
 
 ```swift
@@ -100,7 +103,7 @@ struct AuthController: RouteCollection {
         let routes = routes.grouped("api", "v1", "auth")
         // ...
 
-        let limitedRoutes = routes.grouped(RateLimiter())
+        let limitedRoutes = routes.grouped(LoginRateLimiter())
         limitedRoutes.post("login", use: loginHandler)
         // ...
     }
@@ -112,7 +115,13 @@ This means a user can make up to five incorrect login attempts before being subj
 You can customize this value to fit your security needs:
 
 ```swift
-let limitedRoutes = routes.grouped(RateLimiter(threshold: Int))
+let limitedRoutes = routes.grouped(LoginRateLimiter(threshold: Int))
+```
+
+You can also customize the base time frame (in seconds) for the exponential penalty:
+
+```swift
+let limitedRoutes = routes.grouped(LoginRateLimiter(baseTimeFrame: 120))
 ```
 
 #### 💡 How does VaporRateLimiter work?
@@ -129,11 +138,38 @@ If you want to track attempts using a different identifier (for example, an API 
 
 ```swift
     // Make sure you use the key used in your request
-let limitedRoutes = routes.grouped(RateLimiter(keyToRegister: "apiKey"))
+let limitedRoutes = routes.grouped(LoginRateLimiter(keyToRegister: "apiKey"))
 ```
 This flexibility allows you to adapt VaporRateLimiter to a variety of use cases—whether you’re protecting login endpoints, API access, or any other sensitive route.
 
 ---
+
+### Step 3 (optional): Protect your sign-up endpoint
+
+Apply the `SignUpRateLimiter` middleware to your sign-up route. This limiter buckets IPs (/24 for IPv4, /64 for IPv6) to reduce noise from NAT pools and shared networks.
+
+```swift
+import Vapor
+import VaporRateLimiter
+
+struct AuthController: RouteCollection {
+    func boot(routes: any RoutesBuilder) throws {
+        let routes = routes.grouped("api", "v1", "auth")
+        // ...
+
+        let limitedRoutes = routes.grouped(SignUpRateLimiter())
+        limitedRoutes.post("signup", use: signupHandler)
+        // ...
+    }
+}
+```
+
+Defaults: `threshold = 2`, `baseTimeFrame = 240` seconds. You can override them:
+
+```swift
+let limitedRoutes = routes.grouped(SignUpRateLimiter(threshold: 3, baseTimeFrame: 300))
+```
+
 
 > ⚠️ **Note:** For safety and convenience, the rate limiter middleware is disabled in the development environment.
 
@@ -161,6 +197,20 @@ private func loginHandler(_ req: Request) async throws -> HTTPStatus {
     // ...
 }
 ```
+
+### Clearing sign-up attempts after successful sign-up
+
+If you use `SignUpRateLimiter`, clear the sign-up attempts once the account has been created successfully:
+
+```swift
+private func signupHandler(_ req: Request) async throws -> HTTPStatus {
+    // ... sign-up logic ...
+    // ... After the user is created
+    try await req.signUpAttempsSvc.userIsLoged(user.mail)
+    // ...
+}
+```
+
 
 ---
 
