@@ -13,33 +13,40 @@ import Fluent
 public final class SignUpRateLimiter: AsyncMiddleware {
     private let threshold: Int
     private let baseTimeFrame: TimeInterval
+    private let skipInDevelopment: Bool
     private let keyToRegister: String
+    private let keyLogStrategy: KeyLogStrategy
     private let onAttackDetected: OnAttackDetected?
 
     public init(
         threshold: Int = 2,
         baseTimeFrame: TimeInterval = 240,
+        skipInDevelopment: Bool = true,
         keyToRegister: String = "mail",
+        keyLogStrategy: KeyLogStrategy = .redacted,
         onAttackDetected: OnAttackDetected? = nil
     ) {
         self.threshold = threshold
         self.baseTimeFrame = baseTimeFrame
+        self.skipInDevelopment = skipInDevelopment
         self.keyToRegister = keyToRegister
+        self.keyLogStrategy = keyLogStrategy
         self.onAttackDetected = onAttackDetected
     }
 
     public func respond(to request: Vapor.Request, chainingTo next: any Vapor.AsyncResponder) async throws -> Vapor.Response {
         let userIP = fetchIPBucket(request)
-        let keyToRegister = try request.content.get(String.self, at: keyToRegister)
+        let keyValue = try request.content.get(String.self, at: keyToRegister)
         let currentTime = Date()
     
-        guard request.application.environment != .development else {
+        if skipInDevelopment && request.application.environment == .development {
             return try await next.respond(to: request)
         }
 
-        let count = try await request.signUpAttempsSvc.incrementAndReturnCount(ip: userIP, mail: keyToRegister)
+        let count = try await request.signUpAttempsSvc.incrementAndReturnCount(ip: userIP, mail: keyValue)
+        let keyForLogs = keyLogStrategy.logValue(for: keyValue)
 
-        request.logger.warning("- \(currentTime) user: \(keyToRegister); ip : \(userIP) try to sign up for \(count) time(s)")
+        request.logger.warning("- \(currentTime) \(keyToRegister): \(keyForLogs); ip : \(userIP) try to sign up for \(count) time(s)")
 
         guard let lastAttempt = try await request.signUpAttempsSvc.findBy(ip: userIP) else {
             throw Abort(.notFound, reason: "no attempt found")
@@ -51,15 +58,16 @@ public final class SignUpRateLimiter: AsyncMiddleware {
 
         let penality = penaltyCalculator(lastAttempt.count, baseTimeFrame: baseTimeFrame, threshold: threshold)
 
-        request.logger.warning("⚠️ user: \(keyToRegister) - ip: \(userIP) locked for \(penaltyCalculator(penality)) seconds after \(count) sign up attempts")
+        request.logger.warning("⚠️ \(keyToRegister): \(keyForLogs) - ip: \(userIP) locked for \(penaltyCalculator(penality)) seconds after \(count) sign up attempts")
         await notifyAttackDetected(
             onAttackDetected ?? request.application.vaporRateLimiter.onAttackDetected,
             request: request,
             context: AttackDetectedContext(
                 kind: .signUp,
                 ip: userIP,
-                key: keyToRegister,
+                key: keyValue,
                 keyName: self.keyToRegister,
+                keyForLogs: keyForLogs,
                 count: lastAttempt.count,
                 threshold: threshold,
                 penalty: penality,

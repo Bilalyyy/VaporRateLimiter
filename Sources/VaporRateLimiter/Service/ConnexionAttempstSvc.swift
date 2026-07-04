@@ -37,7 +37,7 @@ public struct ConnexionAttempstSvc {
 
     public func userIsLoged(_ keyID: String) async throws {
         try await repo.delete(keyID)
-        logger.warning("- ✅ user: \(keyID) loged successfully")
+        logger.warning("- user logged successfully; removed login attempts")
     }
 }
 

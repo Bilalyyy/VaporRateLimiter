@@ -133,7 +133,7 @@ Configure it once during application boot:
 
 ```swift
 app.vaporRateLimiter.onAttackDetected = { req, attack in
-    req.logger.critical("Attack detected from \(attack.ip) for \(attack.key)")
+    req.logger.critical("Attack detected from \(attack.ip) for \(attack.keyName): \(attack.keyForLogs)")
     // Send a Slack message, email, webhook, metric, etc.
 }
 ```
@@ -163,6 +163,24 @@ If you want to track attempts using a different identifier (for example, an API 
 let limitedRoutes = routes.grouped(LoginRateLimiter(keyToRegister: "apiKey"))
 ```
 This flexibility allows you to adapt VaporRateLimiter to a variety of use cases—whether you’re protecting login endpoints, API access, or any other sensitive route.
+
+By default, VaporRateLimiter does not write the registered key value to its own logs. This prevents sensitive values such as API keys from being exposed accidentally. If you need a small identifier for debugging, configure a safe log strategy:
+
+```swift
+let limitedRoutes = routes.grouped(LoginRateLimiter(
+    keyToRegister: "apiKey",
+    keyLogStrategy: .prefix(3)
+))
+```
+
+Available strategies are:
+
+- `.redacted` logs `[redacted]` and is the default.
+- `.prefix(3)` logs only the first three characters, for example `abc...`.
+- `.prefixAndSuffix(3, 4)` logs the first three and last four characters, for example `abc...wxyz`.
+- `.none` logs `[not logged]`.
+
+When using `onAttackDetected`, prefer `attack.keyForLogs` for logs and alerts. `attack.key` contains the raw value and should only be used when you explicitly need the original key for secure internal processing.
 
 ---
 
@@ -202,6 +220,11 @@ let limitedRoutes = routes.grouped(SignUpRateLimiter(onAttackDetected: { req, at
 
 
 > ⚠️ **Note:** For safety and convenience, the rate limiter middleware is disabled in the development environment.
+> To test it locally with tools such as Postman, enable it explicitly:
+>
+> ```swift
+> let limitedRoutes = routes.grouped(LoginRateLimiter(skipInDevelopment: false))
+> ```
 
 ---
 

@@ -17,6 +17,7 @@ public struct AttackDetectedContext: Sendable {
     public let ip: String
     public let key: String
     public let keyName: String
+    public let keyForLogs: String
     public let count: Int
     public let threshold: Int
     public let penalty: TimeInterval
@@ -27,6 +28,7 @@ public struct AttackDetectedContext: Sendable {
         ip: String,
         key: String,
         keyName: String,
+        keyForLogs: String? = nil,
         count: Int,
         threshold: Int,
         penalty: TimeInterval,
@@ -36,6 +38,7 @@ public struct AttackDetectedContext: Sendable {
         self.ip = ip
         self.key = key
         self.keyName = keyName
+        self.keyForLogs = keyForLogs ?? KeyLogStrategy.redacted.logValue(for: key)
         self.count = count
         self.threshold = threshold
         self.penalty = penalty

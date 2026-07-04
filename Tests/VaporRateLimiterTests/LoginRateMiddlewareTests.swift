@@ -91,10 +91,21 @@ struct LoginRateMiddlewareTests {
         #expect(context.ip == "127.0.0.1")
         #expect(context.key == "foo@bar.com")
         #expect(context.keyName == "mail")
+        #expect(context.keyForLogs == "[redacted]")
         #expect(context.count == 8)
         #expect(context.threshold == 5)
         #expect(context.penalty == 60)
         #expect(context.baseTimeFrame == 60)
+    }
+
+    @Test("key log strategy hides sensitive values")
+    func testKeyLogStrategy() {
+        #expect(KeyLogStrategy.redacted.logValue(for: "My_API_Key") == "[redacted]")
+        #expect(KeyLogStrategy.prefix(3).logValue(for: "My_API_Key") == "My_...")
+        #expect(KeyLogStrategy.prefixAndSuffix(3, 4).logValue(for: "My_API_Key") == "My_..._Key")
+        #expect(KeyLogStrategy.none.logValue(for: "My_API_Key") == "[not logged]")
+        #expect(KeyLogStrategy.prefix(20).logValue(for: "short") == "[redacted]")
+        #expect(KeyLogStrategy.prefixAndSuffix(3, 4).logValue(for: "short") == "[redacted]")
     }
 
     @Test("Middleware should not return 429 on first attempt; downstream returns 401")

@@ -37,7 +37,7 @@ public struct SignUpAttempstSvc {
 
     public func userIsLoged(_ key: String) async throws {
         try await repo.delete(key)
-        logger.warning("- ✅ user: \(key) loged successfully, we have remove sign up attempts")
+        logger.warning("- user logged successfully; removed sign-up attempts")
     }
 }
 

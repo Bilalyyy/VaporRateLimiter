@@ -84,6 +84,7 @@ struct SignUpRateLimiterTests {
         #expect(context.ip == "127.0.0.0/24")
         #expect(context.key == "test@mail.com")
         #expect(context.keyName == "mail")
+        #expect(context.keyForLogs == "[redacted]")
         #expect(context.count == 4)
         #expect(context.threshold == 2)
         #expect(context.penalty == 480)

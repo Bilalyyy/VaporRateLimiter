@@ -11,18 +11,24 @@ import Fluent
 public final class LoginRateLimiter: AsyncMiddleware {
     private let threshold: Int
     private let baseTimeFrame: TimeInterval
+    private let skipInDevelopment: Bool
     private let keyToRegister: String
+    private let keyLogStrategy: KeyLogStrategy
     private let onAttackDetected: OnAttackDetected?
 
     public init(
         threshold: Int = 5,
         baseTimeFrame: TimeInterval = 60,
+        skipInDevelopment: Bool = true,
         keyToRegister: String = "mail",
+        keyLogStrategy: KeyLogStrategy = .redacted,
         onAttackDetected: OnAttackDetected? = nil
     ) {
         self.threshold = threshold
         self.baseTimeFrame = baseTimeFrame
+        self.skipInDevelopment = skipInDevelopment
         self.keyToRegister = keyToRegister
+        self.keyLogStrategy = keyLogStrategy
         self.onAttackDetected = onAttackDetected
     }
 
@@ -31,14 +37,15 @@ public final class LoginRateLimiter: AsyncMiddleware {
         let keyId = try request.content.get(String.self, at: keyToRegister)
         let currentTime = Date()
 
-        guard request.application.environment == .development else {
+        if skipInDevelopment && request.application.environment == .development {
             return try await next.respond(to: request)
         }
 
         // TODO: update incrementAndReturnCount() to incrementAndReturnConnexionAttemptDto()
         let count = try await request.connexionAttempsSvc.incrementAndReturnCount(ip: userIP, keyId: keyId)
+        let keyForLogs = keyLogStrategy.logValue(for: keyId)
 
-        request.logger.warning("- \(currentTime) user: \(keyId); ip : \(userIP) try to login for \(count) time(s)")
+        request.logger.warning("- \(currentTime) \(keyToRegister): \(keyForLogs); ip : \(userIP) try to login for \(count) time(s)")
 
         guard let lastAttempt = try await request.connexionAttempsSvc.findBy(ip: userIP,
                                                                              or: keyId) else {
@@ -50,7 +57,7 @@ public final class LoginRateLimiter: AsyncMiddleware {
         }
         let penality = penaltyCalculator(lastAttempt.count, baseTimeFrame: baseTimeFrame, threshold: threshold)
 
-        request.logger.warning("⚠️ user: \(keyId) locked for \(penaltyCalculator(penality)) seconds after \(count) failed attempts")
+        request.logger.warning("⚠️ \(keyToRegister): \(keyForLogs) locked for \(penaltyCalculator(penality)) seconds after \(count) failed attempts")
         await notifyAttackDetected(
             onAttackDetected ?? request.application.vaporRateLimiter.onAttackDetected,
             request: request,
@@ -59,6 +66,7 @@ public final class LoginRateLimiter: AsyncMiddleware {
                 ip: userIP,
                 key: keyId,
                 keyName: keyToRegister,
+                keyForLogs: keyForLogs,
                 count: lastAttempt.count,
                 threshold: threshold,
                 penalty: penality,
