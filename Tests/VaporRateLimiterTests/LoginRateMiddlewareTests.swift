@@ -63,6 +63,40 @@ struct LoginRateMiddlewareTests {
         }
     }
 
+    @Test("calls app onAttackDetected when request is blocked")
+    func testCallsOnAttackDetectedWhenBlocked() async throws {
+        let recorder = AttackDetectedRecorder()
+
+        try await withApp(appOnAttackDetected: { _, context in
+            await recorder.append(context)
+        }) { app in
+            let attempts = VRLConnexionAttempt.createAnAttempt(count: 7)
+            try await attempts.save(on: app.db)
+
+            let loginReq: LoginReq = .init(mail: attempts.keyId, password: "pass")
+
+            try await app.testing().test(.POST, "testWithMail/login", beforeRequest: { req in
+                try req.content.encode(loginReq)
+                req.headers.replaceOrAdd(name: .init("X-Forwarded-For"), value: attempts.ip)
+            }, afterResponse: { res async throws in
+                #expect(res.status == .tooManyRequests)
+            })
+        }
+
+        let contexts = await recorder.all()
+        #expect(contexts.count == 1)
+
+        let context = try #require(contexts.first)
+        #expect(context.kind == .login)
+        #expect(context.ip == "127.0.0.1")
+        #expect(context.key == "foo@bar.com")
+        #expect(context.keyName == "mail")
+        #expect(context.count == 8)
+        #expect(context.threshold == 5)
+        #expect(context.penalty == 60)
+        #expect(context.baseTimeFrame == 60)
+    }
+
     @Test("Middleware should not return 429 on first attempt; downstream returns 401")
     func testNoAttempsRegistered() async throws {
         try await withApp { app in
@@ -101,5 +135,17 @@ struct LoginRateMiddlewareTests {
             let actual = penaltyCalculator(attempts, threshold: 5)
             #expect(actual == expected, "For \(attempts) attempts, expected \(expected), got \(actual)")
         }
+    }
+}
+
+actor AttackDetectedRecorder {
+    private var contexts: [AttackDetectedContext] = []
+
+    func append(_ context: AttackDetectedContext) {
+        contexts.append(context)
+    }
+
+    func all() -> [AttackDetectedContext] {
+        contexts
     }
 }

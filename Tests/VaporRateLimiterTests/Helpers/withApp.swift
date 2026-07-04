@@ -12,8 +12,14 @@ import FluentPostgresDriver
 import Vapor
 
 
-func withApp(_ test: @escaping (Application) async throws -> Void) async throws {
+func withApp(
+    appOnAttackDetected: OnAttackDetected? = nil,
+    loginOnAttackDetected: OnAttackDetected? = nil,
+    signUpOnAttackDetected: OnAttackDetected? = nil,
+    _ test: @escaping (Application) async throws -> Void
+) async throws {
     let app = try await Application.make(.testing)
+    app.vaporRateLimiter.onAttackDetected = appOnAttackDetected
 
         // MARK: - Sessions
         sessionConfiguration(app)
@@ -48,7 +54,7 @@ func withApp(_ test: @escaping (Application) async throws -> Void) async throws 
         let routes1 = app.routes.grouped("testWithMail")
         let routes2 = app.routes.grouped("testWithAPI")
 
-        let limitedRoutes = routes1.grouped(LoginRateLimiter())
+        let limitedRoutes = routes1.grouped(LoginRateLimiter(onAttackDetected: loginOnAttackDetected))
         limitedRoutes.post("login") { req async throws -> HTTPStatus in
             let content = try req.content.decode(LoginReq.self)
 
@@ -70,7 +76,7 @@ func withApp(_ test: @escaping (Application) async throws -> Void) async throws 
         }
 
 
-        let limitedWithAPIKey = routes2.grouped(LoginRateLimiter(keyToRegister: "apiKey"))
+        let limitedWithAPIKey = routes2.grouped(LoginRateLimiter(keyToRegister: "apiKey", onAttackDetected: loginOnAttackDetected))
         limitedWithAPIKey.post("login") { req async throws -> HTTPStatus in
 
             let content = try req.content.decode(LoginReqByAPI.self)
@@ -93,7 +99,7 @@ func withApp(_ test: @escaping (Application) async throws -> Void) async throws 
         }
 
         let routes3 = app.routes.grouped("test-ip")
-        let protected = routes3.grouped(SignUpRateLimiter())
+        let protected = routes3.grouped(SignUpRateLimiter(onAttackDetected: signUpOnAttackDetected))
         protected.post("sign-up") { req async throws -> HTTPStatus in
             let _ = try req.content.decode(SignUpReq.self)
 

@@ -29,6 +29,7 @@
 - Exponential penalty increases after each set of consecutive failed attempts (customizable base time frame)
 - Effectively protects against brute-force attacks, even when facing advanced techniques such as massive, concurrent (parallel) request attempts.
 - Logs all suspicious activities and lockouts
+- Provides an `onAttackDetected` hook to trigger alerts when a request is blocked
 - Easy integration into any existing Vapor project
 
 ---
@@ -124,6 +125,27 @@ You can also customize the base time frame (in seconds) for the exponential pena
 let limitedRoutes = routes.grouped(LoginRateLimiter(baseTimeFrame: 120))
 ```
 
+You can trigger your own alert when an attack is detected with the global `onAttackDetected` hook.
+The hook is called after a middleware confirms an active penalty and before it returns `429 Too Many Requests`.
+If the hook throws, VaporRateLimiter logs the error and still blocks the request.
+
+Configure it once during application boot:
+
+```swift
+app.vaporRateLimiter.onAttackDetected = { req, attack in
+    req.logger.critical("Attack detected from \(attack.ip) for \(attack.key)")
+    // Send a Slack message, email, webhook, metric, etc.
+}
+```
+
+If one route needs a specific alert, you can override the global hook at middleware declaration:
+
+```swift
+let limitedRoutes = routes.grouped(LoginRateLimiter(onAttackDetected: { req, attack in
+    req.logger.critical("Specific login alert from \(attack.ip)")
+}))
+```
+
 #### 💡 How does VaporRateLimiter work?
 
 VaporRateLimiter is a middleware that intercepts incoming requests on the routes where it is applied **before** they reach your route handlers.  
@@ -168,6 +190,14 @@ Defaults: `threshold = 2`, `baseTimeFrame = 240` seconds. You can override them:
 
 ```swift
 let limitedRoutes = routes.grouped(SignUpRateLimiter(threshold: 3, baseTimeFrame: 300))
+```
+
+`SignUpRateLimiter` uses the same global hook. It also supports a route-specific override:
+
+```swift
+let limitedRoutes = routes.grouped(SignUpRateLimiter(onAttackDetected: { req, attack in
+    req.logger.critical("Suspicious sign-up activity from \(attack.ip)")
+}))
 ```
 
 

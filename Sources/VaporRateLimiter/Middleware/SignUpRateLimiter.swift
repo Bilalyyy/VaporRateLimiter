@@ -14,11 +14,18 @@ public final class SignUpRateLimiter: AsyncMiddleware {
     private let threshold: Int
     private let baseTimeFrame: TimeInterval
     private let keyToRegister: String
+    private let onAttackDetected: OnAttackDetected?
 
-    public init(threshold: Int = 2, baseTimeFrame: TimeInterval = 240, keyToRegister: String = "mail") {
+    public init(
+        threshold: Int = 2,
+        baseTimeFrame: TimeInterval = 240,
+        keyToRegister: String = "mail",
+        onAttackDetected: OnAttackDetected? = nil
+    ) {
         self.threshold = threshold
         self.baseTimeFrame = baseTimeFrame
         self.keyToRegister = keyToRegister
+        self.onAttackDetected = onAttackDetected
     }
 
     public func respond(to request: Vapor.Request, chainingTo next: any Vapor.AsyncResponder) async throws -> Vapor.Response {
@@ -45,6 +52,20 @@ public final class SignUpRateLimiter: AsyncMiddleware {
         let penality = penaltyCalculator(lastAttempt.count, baseTimeFrame: baseTimeFrame, threshold: threshold)
 
         request.logger.warning("⚠️ user: \(keyToRegister) - ip: \(userIP) locked for \(penaltyCalculator(penality)) seconds after \(count) sign up attempts")
+        await notifyAttackDetected(
+            onAttackDetected ?? request.application.vaporRateLimiter.onAttackDetected,
+            request: request,
+            context: AttackDetectedContext(
+                kind: .signUp,
+                ip: userIP,
+                key: keyToRegister,
+                keyName: self.keyToRegister,
+                count: lastAttempt.count,
+                threshold: threshold,
+                penalty: penality,
+                baseTimeFrame: baseTimeFrame
+            )
+        )
 
         throw Abort(.tooManyRequests, reason: "Too many sign up. Try again after \(penaltyCalculator(penality)) seconds.")
     }

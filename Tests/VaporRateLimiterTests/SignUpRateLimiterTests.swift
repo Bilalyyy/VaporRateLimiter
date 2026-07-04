@@ -56,6 +56,40 @@ struct SignUpRateLimiterTests {
         }
     }
 
+    @Test("calls onAttackDetected when sign-up request is blocked")
+    func testCallsOnAttackDetectedWhenBlocked() async throws {
+        let recorder = AttackDetectedRecorder()
+
+        try await withApp(signUpOnAttackDetected: { _, context in
+            await recorder.append(context)
+        }) { app in
+            let attempts = VRLSignUpAttempt.createAnAttempt(count: 3)
+            try await attempts.save(on: app.db)
+
+            let signinReq: SignUpReq = .init(ip: attempts.ip, mail: "test@mail.com")
+
+            try await app.testing().test(.POST, "test-ip/sign-up", beforeRequest: { req in
+                try req.content.encode(signinReq)
+                req.headers.replaceOrAdd(name: .init("X-Forwarded-For"), value: "127.0.0.1")
+            }, afterResponse: { res async throws in
+                #expect(res.status == .tooManyRequests)
+            })
+        }
+
+        let contexts = await recorder.all()
+        #expect(contexts.count == 1)
+
+        let context = try #require(contexts.first)
+        #expect(context.kind == .signUp)
+        #expect(context.ip == "127.0.0.0/24")
+        #expect(context.key == "test@mail.com")
+        #expect(context.keyName == "mail")
+        #expect(context.count == 4)
+        #expect(context.threshold == 2)
+        #expect(context.penalty == 480)
+        #expect(context.baseTimeFrame == 240)
+    }
+
     @Test("Middleware should not return 429 on first attempt; downstream returns 401")
     func testPassesThroughWhenNoAttempts() async throws {
         try await withApp { app in
