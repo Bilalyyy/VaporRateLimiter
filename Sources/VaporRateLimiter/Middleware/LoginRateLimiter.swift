@@ -41,23 +41,17 @@ public final class LoginRateLimiter: AsyncMiddleware {
             return try await next.respond(to: request)
         }
 
-        // TODO: update incrementAndReturnCount() to incrementAndReturnConnexionAttemptDto()
-        let count = try await request.connexionAttempsSvc.incrementAndReturnCount(ip: userIP, keyId: keyId)
+        let lastAttempt = try await request.connexionAttempsSvc.incrementAndReturnAttempt(ip: userIP, keyId: keyId)
         let keyForLogs = keyLogStrategy.logValue(for: keyId)
 
-        request.logger.warning("- \(currentTime) \(keyToRegister): \(keyForLogs); ip : \(userIP) try to login for \(count) time(s)")
+        request.logger.warning("- \(currentTime) \(keyToRegister): \(keyForLogs); ip : \(userIP) try to login for \(lastAttempt.count) time(s)")
 
-        guard let lastAttempt = try await request.connexionAttempsSvc.findBy(ip: userIP,
-                                                                             or: keyId) else {
-            throw Abort(.notFound, reason: "no attempt found")
-        }
-
-        guard lastAttempt.count >= threshold && isPenaltyActive(for: lastAttempt.toDto(), baseTimeFrame: baseTimeFrame, threshold: threshold) else {
+        guard lastAttempt.count >= threshold && isPenaltyActive(for: lastAttempt, baseTimeFrame: baseTimeFrame, threshold: threshold) else {
             return try await next.respond(to: request)
         }
         let penality = penaltyCalculator(lastAttempt.count, baseTimeFrame: baseTimeFrame, threshold: threshold)
 
-        request.logger.warning("⚠️ \(keyToRegister): \(keyForLogs) locked for \(penaltyCalculator(penality)) seconds after \(count) failed attempts")
+        request.logger.warning("⚠️ \(keyToRegister): \(keyForLogs) locked for \(penaltyCalculator(penality)) seconds after \(lastAttempt.count) failed attempts")
         await notifyAttackDetected(
             onAttackDetected ?? request.application.vaporRateLimiter.onAttackDetected,
             request: request,

@@ -28,19 +28,23 @@ extension ConnexionAttemptRepository {
     // MARK: - Update
 
     func incrementAndReturnCount(ip: String, keyId: String) async throws -> Int {
+        try await incrementAndReturnAttempt(ip: ip, keyId: keyId).count
+    }
+
+    func incrementAndReturnAttempt(ip: String, keyId: String) async throws -> AttemptDto {
         let sql = db as! any SQLDatabase
         let query: SQLQueryString = """
         INSERT INTO connexion_attempts (id, ip, key_id, count, timestamp)
         VALUES (\(bind: UUID()), \(bind: ip), \(bind: keyId), 1, NOW())
         ON CONFLICT (ip, key_id)
         DO UPDATE SET count = connexion_attempts.count + 1, timestamp = NOW()
-        RETURNING count;
+        RETURNING id, count, timestamp;
         """
 
-        guard let row = try await sql.raw(SQLQueryString(stringInterpolation: query)).first(decoding: AttemptRow.self) else {
+        guard let row = try await sql.raw(query).first(decoding: AttemptDto.self) else {
             throw FluentError.internalServerError("Impossible de récupérer le compteur")
         }
-        return row.count
+        return row
     }
 
 

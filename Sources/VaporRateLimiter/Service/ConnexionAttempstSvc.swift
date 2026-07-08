@@ -33,6 +33,10 @@ public struct ConnexionAttempstSvc {
         try await repo.incrementAndReturnCount(ip: ip, keyId: keyId)
     }
 
+    func incrementAndReturnAttempt(ip: String, keyId: String) async throws -> AttemptDto {
+        try await repo.incrementAndReturnAttempt(ip: ip, keyId: keyId)
+    }
+
     // MARK: - delete
 
     public func userIsLoged(_ keyID: String) async throws {

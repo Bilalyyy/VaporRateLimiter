@@ -98,6 +98,57 @@ struct LoginRateMiddlewareTests {
         #expect(context.baseTimeFrame == 60)
     }
 
+    @Test("blocks the exact login key when another attempt shares the same IP")
+    func testBlocksExactLoginKeyWhenAnotherAttemptSharesSameIP() async throws {
+        let recorder = AttackDetectedRecorder()
+
+        try await withApp(loginOnAttackDetected: { _, context in
+            await recorder.append(context)
+        }) { app in
+            let req = Request(application: app, on: app.db.eventLoop)
+            let sharedIP = "127.0.0.1"
+            let targetMail = "target@example.com"
+            let otherAttempt = VRLConnexionAttempt(
+                ip: sharedIP,
+                keyId: "other-user@example.com",
+                count: 1,
+                timestamp: .now
+            )
+            try await otherAttempt.save(on: req.db)
+
+            let loginReq = LoginReq(mail: targetMail, password: "bad password")
+            var statuses: [HTTPStatus] = []
+
+            for _ in 0..<5 {
+                try await app.testing().test(.POST, "testWithMail/login", beforeRequest: { req in
+                    try req.content.encode(loginReq)
+                    req.headers.replaceOrAdd(name: .init("X-Forwarded-For"), value: sharedIP)
+                }, afterResponse: { res async throws in
+                    statuses.append(res.status)
+                })
+            }
+
+            #expect(statuses.prefix(4).allSatisfy { $0 == .unauthorized })
+            #expect(statuses.last == .tooManyRequests)
+
+            let attempts = try await req.connexionAttempsSvc.all()
+            let targetAttempt = try #require(attempts.first(where: { $0.ip == sharedIP && $0.keyId == targetMail }))
+            #expect(targetAttempt.count == 5)
+
+            let preservedOtherAttempt = try #require(attempts.first(where: { $0.ip == sharedIP && $0.keyId == otherAttempt.keyId }))
+            #expect(preservedOtherAttempt.count == 1)
+        }
+
+        let contexts = await recorder.all()
+        #expect(contexts.count == 1)
+        let context = try #require(contexts.first)
+        #expect(context.kind == .login)
+        #expect(context.ip == "127.0.0.1")
+        #expect(context.key == "target@example.com")
+        #expect(context.count == 5)
+        #expect(context.threshold == 5)
+    }
+
     @Test("key log strategy hides sensitive values")
     func testKeyLogStrategy() {
         #expect(KeyLogStrategy.redacted.logValue(for: "My_API_Key") == "[redacted]")
